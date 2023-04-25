@@ -1,5 +1,5 @@
 /**
- * TestBase.h
+ * FactoryExt.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -20,27 +20,7 @@
  */
 #pragma once
 #include "jrpc/IFactory.h"
-#include "gtest/gtest.h"
-
-namespace jrpc {
 
 
-
-class TestBase : public ::testing::Test {
-public:
-    TestBase();
-
-    virtual ~TestBase();
-
-    virtual void SetUp() override;
-
-    std::pair<int32_t, int32_t> mkClientServerPair();
-
-protected:
-    IFactory                *m_factory;
-
-};
-
-}
-
+extern "C" jrpc::IFactory *jrpc_getFactory();
 

@@ -20,7 +20,10 @@
  */
 #include "TestBase.h"
 #include "jrpc/FactoryExt.h"
-
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 namespace jrpc {
 
@@ -35,6 +38,24 @@ TestBase::~TestBase() {
 
 void TestBase::SetUp() {
     m_factory = jrpc_getFactory();
+}
+
+std::pair<int32_t, int32_t> TestBase::mkClientServerPair() {
+    std::pair<int32_t, int32_t> srv_port_sock = m_factory->mkSocketServer();
+
+    int client_fd = m_factory->mkSocketClientConnection(srv_port_sock.first);
+
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = 0; // pick any port
+
+    // Now, wait for a readable event
+    int addrlen = sizeof(addr);
+    int server_sock = accept(srv_port_sock.second, 
+        (struct sockaddr *)&addr, (socklen_t *)&addrlen); 
+
+    return {client_fd, server_sock};
 }
 
 }

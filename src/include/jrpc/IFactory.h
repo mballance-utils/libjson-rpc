@@ -1,5 +1,5 @@
 /**
- * TestBase.h
+ * IFactory.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -19,28 +19,33 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/IFactory.h"
-#include "gtest/gtest.h"
+#include "dmgr/IDebugMgr.h"
+#include "jrpc/IEventLoop.h"
+#include "jrpc/IMessageRequestResponseStream.h"
 
 namespace jrpc {
 
 
 
-class TestBase : public ::testing::Test {
+class IFactory {
 public:
-    TestBase();
 
-    virtual ~TestBase();
+    virtual ~IFactory() { }
 
-    virtual void SetUp() override;
+    virtual void init(dmgr::IDebugMgr *dmgr) = 0;
 
-    std::pair<int32_t, int32_t> mkClientServerPair();
+    virtual dmgr::IDebugMgr *getDebugMgr() = 0;
 
-protected:
-    IFactory                *m_factory;
+    virtual IEventLoop *mkEventLoop() = 0;
+
+    virtual std::pair<int32_t, int32_t> mkSocketServer() = 0;
+
+    virtual int32_t mkSocketClientConnection(int32_t port) = 0;
+
+    virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(int32_t sock_fd) = 0;
 
 };
 
-}
+} /* namespace jrpc */
 
 

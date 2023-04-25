@@ -1,5 +1,5 @@
 /**
- * TestBase.h
+ * IMessageRequestResponseStream.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -19,28 +19,26 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/IFactory.h"
-#include "gtest/gtest.h"
+#include <functional>
+#include "nlohmann/json_fwd.hpp"
 
 namespace jrpc {
 
 
 
-class TestBase : public ::testing::Test {
+class IMessageRequestResponseStream {
 public:
-    TestBase();
 
-    virtual ~TestBase();
+    virtual ~IMessageRequestResponseStream() { }
 
-    virtual void SetUp() override;
+    virtual void setNotifyCallback(const std::function<void (const nlohmann::json &)> &func) = 0;
 
-    std::pair<int32_t, int32_t> mkClientServerPair();
+    virtual const nlohmann::json &invoke(const nlohmann::json &method) = 0;
 
-protected:
-    IFactory                *m_factory;
+    virtual void close() = 0;
 
 };
 
-}
+} /* namespace jrpc */
 
 

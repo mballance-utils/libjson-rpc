@@ -1,5 +1,5 @@
 /**
- * TestBase.h
+ * TestDispatcher.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -19,25 +19,17 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/IFactory.h"
-#include "gtest/gtest.h"
+#include "TestBase.h"
 
 namespace jrpc {
 
 
 
-class TestBase : public ::testing::Test {
+class TestDispatcher : public TestBase {
 public:
-    TestBase();
+    TestDispatcher();
 
-    virtual ~TestBase();
-
-    virtual void SetUp() override;
-
-    std::pair<int32_t, int32_t> mkClientServerPair();
-
-protected:
-    IFactory                *m_factory;
+    virtual ~TestDispatcher();
 
 };
 

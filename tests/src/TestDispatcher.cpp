@@ -1,5 +1,5 @@
-/**
- * TestBase.h
+/*
+ * TestDispatcher.cpp
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -16,31 +16,29 @@
  * limitations under the License.
  *
  * Created on:
- *     Author: 
+ *     Author:
  */
-#pragma once
-#include "jrpc/IFactory.h"
-#include "gtest/gtest.h"
+#include "TestDispatcher.h"
+
 
 namespace jrpc {
 
 
-
-class TestBase : public ::testing::Test {
-public:
-    TestBase();
-
-    virtual ~TestBase();
-
-    virtual void SetUp() override;
-
-    std::pair<int32_t, int32_t> mkClientServerPair();
-
-protected:
-    IFactory                *m_factory;
-
-};
+TestDispatcher::TestDispatcher() {
 
 }
 
+TestDispatcher::~TestDispatcher() {
 
+}
+
+TEST_F(TestDispatcher, valid_req) {
+    // Need a ReqResp stream
+    // Need a Transport+Dispatcher pair
+    // 
+    // - Must recognize messages that always have an immediate response
+    // - Must recognize those that have a deferred response
+    // - Can one message be both?
+}
+
+}

@@ -1,5 +1,5 @@
 /**
- * TestBase.h
+ * IMessageDispatcher.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -19,28 +19,23 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/IFactory.h"
-#include "gtest/gtest.h"
+#include <functional>
+#include "jrpc/IMessageTransport.h"
 
 namespace jrpc {
 
 
-
-class TestBase : public ::testing::Test {
+class IMessageDispatcher : public virtual IMessageTransport {
 public:
-    TestBase();
 
-    virtual ~TestBase();
+    virtual ~IMessageDispatcher() { }
 
-    virtual void SetUp() override;
-
-    std::pair<int32_t, int32_t> mkClientServerPair();
-
-protected:
-    IFactory                *m_factory;
+    virtual void registerMethod(
+        const std::string                           &method,
+        std::function<void(const nlohmann::json &)> impl) = 0;
 
 };
 
-}
+} /* namespace jrpc */
 
 

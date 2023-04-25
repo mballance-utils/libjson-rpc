@@ -1,5 +1,5 @@
 /**
- * TestBase.h
+ * IEventLoop.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -19,28 +19,38 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/IFactory.h"
-#include "gtest/gtest.h"
+#include <functional>
+#include <memory>
+#include <stdint.h>
 
 namespace jrpc {
 
 
-
-class TestBase : public ::testing::Test {
+class IEventLoop;
+using IEventLoopUP=std::unique_ptr<IEventLoop>;
+class IEventLoop {
 public:
-    TestBase();
 
-    virtual ~TestBase();
+    virtual ~IEventLoop() { }
 
-    virtual void SetUp() override;
+    virtual int32_t process_one_event(int32_t timeout_ms) = 0;
 
-    std::pair<int32_t, int32_t> mkClientServerPair();
+    virtual void addIdleTask(std::function<void ()> task) = 0;
 
-protected:
-    IFactory                *m_factory;
+    virtual void addAfterTask(
+        std::function<void ()>  task,
+        int32_t                 ms) = 0;
+
+    virtual void addFdReadTask(
+        std::function<void ()>  task,
+        int32_t                 fd) = 0;
+
+    virtual void addFdWriteTask(
+        std::function<void ()>  task,
+        int32_t                 fd) = 0;
 
 };
 
-}
+} /* namespace jrpc */
 
 
