@@ -22,6 +22,7 @@
 #include "EventLoop.h"
 #include "Factory.h"
 #include "MessageRequestResponseStream.h"
+#include "NBSocketServerMessageDispatcher.h"
 
 #include <netinet/in.h>
 #include <stdlib.h>
@@ -102,6 +103,12 @@ int32_t Factory::mkSocketClientConnection(int32_t port) {
 IMessageRequestResponseStream *Factory::mkMessageRequestResponseStream(
     int32_t sock_fd) {
     return new MessageRequestResponseStream(m_dmgr, sock_fd);
+}
+
+IMessageDispatcher *Factory::mkNBSocketServerMessageDispatcher(
+        IEventLoop          *loop,
+        int32_t             sock_fd) {
+    return new NBSocketServerMessageDispatcher(m_dmgr, loop, sock_fd);
 }
 
 IFactory *Factory::inst() {

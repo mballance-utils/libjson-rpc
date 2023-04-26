@@ -21,6 +21,7 @@
 #pragma once
 #include "dmgr/IDebugMgr.h"
 #include "jrpc/IEventLoop.h"
+#include "jrpc/IMessageDispatcher.h"
 #include "jrpc/IMessageRequestResponseStream.h"
 
 namespace jrpc {
@@ -43,6 +44,10 @@ public:
     virtual int32_t mkSocketClientConnection(int32_t port) = 0;
 
     virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(int32_t sock_fd) = 0;
+
+    virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
+        IEventLoop          *loop,
+        int32_t             sock_fd) = 0;
 
 };
 

@@ -19,6 +19,7 @@
  *     Author:
  */
 #include "TestDispatcher.h"
+#include "nlohmann/json.hpp"
 
 
 namespace jrpc {
@@ -33,6 +34,20 @@ TestDispatcher::~TestDispatcher() {
 }
 
 TEST_F(TestDispatcher, valid_req) {
+    TestBase::ReqRspDispatcherLoop h = mkReqDispatcher();
+
+    bool called = false;
+
+    h.dispatch->registerMethod("myMethod", [&] (const nlohmann::json &m) {
+        called = true;
+    });
+
+    nlohmann::json params;
+
+    params["p1"] = 1;
+
+    h.reqrsp->invoke("myMethod", params);
+
     // Need a ReqResp stream
     // Need a Transport+Dispatcher pair
     // 

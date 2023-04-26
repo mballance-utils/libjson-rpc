@@ -41,7 +41,9 @@ public:
         m_notify_f = func;
     }
 
-    virtual const nlohmann::json &invoke(const nlohmann::json &method) override;
+    virtual const nlohmann::json &invoke(
+        const std::string       &method,
+        const nlohmann::json    &params) override;
 
     virtual void close() override;
 
@@ -49,6 +51,7 @@ private:
     static dmgr::IDebug                                 *m_dbg;
     int32_t                                             m_sock_fd;
     std::function<void (const nlohmann::json &)>        m_notify_f;
+    int32_t                                             m_id;
 
 };
 

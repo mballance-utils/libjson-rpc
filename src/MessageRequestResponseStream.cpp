@@ -18,9 +18,19 @@
  * Created on:
  *     Author:
  */
+#include <string>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#ifndef _WIN32
+#include <sys/socket.h>
+#else
+#include <winsock.h>
+#endif
 #include "dmgr/impl/DebugMacros.h"
 #include "MessageRequestResponseStream.h"
 #include <unistd.h>
+#include "nlohmann/json.hpp"
 
 
 namespace jrpc {
@@ -28,7 +38,7 @@ namespace jrpc {
 
 MessageRequestResponseStream::MessageRequestResponseStream(
     dmgr::IDebugMgr             *dmgr,
-    int32_t                     sock_fd) : m_sock_fd(sock_fd) {
+    int32_t                     sock_fd) : m_sock_fd(sock_fd), m_id(1) {
     DEBUG_INIT("MessageRequestResponseStream", dmgr);
 }
 
@@ -37,8 +47,25 @@ MessageRequestResponseStream::~MessageRequestResponseStream() {
 }
 
 const nlohmann::json &MessageRequestResponseStream::invoke(
-    const nlohmann::json &method) {
+    const std::string       &method,
+    const nlohmann::json    &params) {
+    int32_t id = m_id;
+    m_id++;
 
+    nlohmann::json msg;
+    msg["jsonrpc"] = "2.0";
+    msg["id"] = id;
+    msg["method"] = method;
+    msg["params"] = params;
+
+    std::string body = msg.dump();
+    char tmp[64];
+    sprintf(tmp, "Content-Length: %d\r\n\r\n", body.size());
+
+    ::send(m_sock_fd, tmp, strlen(tmp), 0);
+    ::send(m_sock_fd, body.c_str(), body.size(), 0);
+
+    // TODO: poll, waiting for a response
 }
 
 void MessageRequestResponseStream::close() {

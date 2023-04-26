@@ -1,5 +1,5 @@
-/**
- * IMessageDispatcher.h
+/*
+ * NBSocketServerMessageDispatcher.cpp
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -16,28 +16,30 @@
  * limitations under the License.
  *
  * Created on:
- *     Author: 
+ *     Author:
  */
-#pragma once
-#include <functional>
-#include <memory>
-#include "jrpc/IMessageTransport.h"
+#include "dmgr/impl/DebugMacros.h"
+#include "NBSocketServerMessageDispatcher.h"
+
 
 namespace jrpc {
 
-class IMessageDispatcher;
-using IMessageDispatcherUP=std::unique_ptr<IMessageDispatcher>;
-class IMessageDispatcher : public virtual IMessageTransport {
-public:
 
-    virtual ~IMessageDispatcher() { }
+NBSocketServerMessageDispatcher::NBSocketServerMessageDispatcher(
+    dmgr::IDebugMgr             *dmgr,
+    IEventLoop                  *loop,
+    int32_t                     sock_fd) : 
+        MessageDispatcher(dmgr), m_transport(dmgr, sock_fd) {
+    DEBUG_INIT("NBSocketServerMessageDispatcher", dmgr);
 
-    virtual void registerMethod(
-        const std::string                           &method,
-        std::function<void(const nlohmann::json &)> impl) = 0;
+    m_transport.init(loop, this);
+    init(loop, &m_transport);
+}
 
-};
+NBSocketServerMessageDispatcher::~NBSocketServerMessageDispatcher() {
 
-} /* namespace jrpc */
+}
 
+dmgr::IDebug *NBSocketServerMessageDispatcher::m_dbg = 0;
 
+}

@@ -58,4 +58,20 @@ std::pair<int32_t, int32_t> TestBase::mkClientServerPair() {
     return {client_fd, server_sock};
 }
 
+TestBase::ReqRspDispatcherLoop TestBase::mkReqDispatcher() {
+    IEventLoop *loop = m_factory->mkEventLoop();
+    std::pair<int32_t, int32_t> client_srv_fd = mkClientServerPair();
+
+    IMessageRequestResponseStream *reqrsp = m_factory->mkMessageRequestResponseStream(
+        client_srv_fd.first);
+    IMessageDispatcher *dispatch = m_factory->mkNBSocketServerMessageDispatcher(
+        loop, client_srv_fd.second);
+
+    return {
+        .reqrsp = reqrsp,
+        .dispatch = dispatch,
+        .loop = loop
+    };
+}
+
 }

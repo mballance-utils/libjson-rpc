@@ -49,6 +49,10 @@ public:
 
     virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(int32_t sock_fd) override;
 
+    virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
+        IEventLoop          *loop,
+        int32_t             sock_fd) override;
+
     static IFactory *inst();
 
 private:

@@ -28,6 +28,12 @@ namespace jrpc {
 
 class TestBase : public ::testing::Test {
 public:
+    struct ReqRspDispatcherLoop {
+        IMessageRequestResponseStream       *reqrsp;
+        IMessageDispatcher                  *dispatch;
+        IEventLoop                          *loop;
+    };
+public:
     TestBase();
 
     virtual ~TestBase();
@@ -35,6 +41,8 @@ public:
     virtual void SetUp() override;
 
     std::pair<int32_t, int32_t> mkClientServerPair();
+
+    ReqRspDispatcherLoop mkReqDispatcher();
 
 protected:
     IFactory                *m_factory;

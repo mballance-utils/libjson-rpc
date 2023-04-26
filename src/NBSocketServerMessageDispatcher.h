@@ -1,5 +1,5 @@
 /**
- * IMessageRequestResponseStream.h
+ * NBSocketServerMessageDispatcher.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -19,28 +19,30 @@
  *     Author: 
  */
 #pragma once
-#include <functional>
-#include "nlohmann/json_fwd.hpp"
+#include "dmgr/IDebugMgr.h"
+#include "MessageDispatcher.h"
+#include "NBSocketMessageTransport.h"
 
 namespace jrpc {
 
 
 
-class IMessageRequestResponseStream {
+class NBSocketServerMessageDispatcher : 
+    public virtual MessageDispatcher {
 public:
+    NBSocketServerMessageDispatcher(
+        dmgr::IDebugMgr         *dmgr,
+        IEventLoop              *loop,
+        int32_t                 sock_fd);
 
-    virtual ~IMessageRequestResponseStream() { }
+    virtual ~NBSocketServerMessageDispatcher();
 
-    virtual void setNotifyCallback(const std::function<void (const nlohmann::json &)> &func) = 0;
-
-    virtual const nlohmann::json &invoke(
-        const std::string       &method,
-        const nlohmann::json    &params) = 0;
-
-    virtual void close() = 0;
+private:
+    static dmgr::IDebug                 *m_dbg;
+    NBSocketMessageTransport            m_transport;
 
 };
 
-} /* namespace jrpc */
+}
 
 
