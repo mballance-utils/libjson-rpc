@@ -44,7 +44,7 @@ public:
 
     virtual void registerMethod(
         const std::string                           &method,
-        std::function<void(const nlohmann::json &)> impl) override;
+        std::function<IRspMsgUP(IReqMsgUP &)> impl) override;
 
 	/**
 	 * Inbound message
@@ -55,7 +55,7 @@ private:
     static dmgr::IDebug                 *m_dbg;
     IEventLoop                          *m_loop;
     IMessageTransport                   *m_peer;
-	std::map<std::string,std::function<void(const nlohmann::json &)>> m_method_m;
+	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>> m_method_m;
 };
 
 } /* namespace lls */

@@ -23,6 +23,8 @@
 #include "Factory.h"
 #include "MessageRequestResponseStream.h"
 #include "NBSocketServerMessageDispatcher.h"
+#include "ReqMsg.h"
+#include "RspMsg.h"
 
 #include <netinet/in.h>
 #include <stdlib.h>
@@ -101,14 +103,29 @@ int32_t Factory::mkSocketClientConnection(int32_t port) {
 }
 
 IMessageRequestResponseStream *Factory::mkMessageRequestResponseStream(
-    int32_t sock_fd) {
-    return new MessageRequestResponseStream(m_dmgr, sock_fd);
+        IEventLoop          *loop,
+        int32_t             sock_fd) {
+    return new MessageRequestResponseStream(m_dmgr, loop, sock_fd);
 }
 
 IMessageDispatcher *Factory::mkNBSocketServerMessageDispatcher(
         IEventLoop          *loop,
         int32_t             sock_fd) {
     return new NBSocketServerMessageDispatcher(m_dmgr, loop, sock_fd);
+}
+
+IRspMsg *Factory::mkRspMsgSuccess(
+        int32_t                 id,
+        const nlohmann::json    &result) {
+    return new RspMsg(id, result);
+}
+
+IRspMsg *Factory::mkRspMsgError(
+        int32_t                 id,
+        int32_t                 code,
+        const std::string       &msg,
+        const nlohmann::json    &data) {
+    return new RspMsg(id, code, msg, data);
 }
 
 IFactory *Factory::inst() {

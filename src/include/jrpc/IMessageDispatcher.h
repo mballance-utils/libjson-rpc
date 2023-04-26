@@ -21,6 +21,8 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include "jrpc/IReqMsg.h"
+#include "jrpc/IRspMsg.h"
 #include "jrpc/IMessageTransport.h"
 
 namespace jrpc {
@@ -34,7 +36,7 @@ public:
 
     virtual void registerMethod(
         const std::string                           &method,
-        std::function<void(const nlohmann::json &)> impl) = 0;
+        std::function<IRspMsgUP(IReqMsgUP &)> impl) = 0;
 
 };
 

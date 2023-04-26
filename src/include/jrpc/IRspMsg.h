@@ -1,5 +1,5 @@
 /**
- * IMessageRequestResponseStream.h
+ * IRspMsg.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -19,26 +19,29 @@
  *     Author: 
  */
 #pragma once
-#include <functional>
-#include "jrpc/IRspMsg.h"
+#include <memory>
+#include <string>
 #include "nlohmann/json_fwd.hpp"
 
 namespace jrpc {
 
-
-
-class IMessageRequestResponseStream {
+class IRspMsg;
+using IRspMsgUP=std::unique_ptr<IRspMsg>;
+class IRspMsg {
 public:
 
-    virtual ~IMessageRequestResponseStream() { }
+    virtual ~IRspMsg() { }
 
-    virtual void setNotifyCallback(const std::function<void (const nlohmann::json &)> &func) = 0;
+    virtual int32_t getId() = 0;
 
-    virtual IRspMsgUP invoke(
-        const std::string       &method,
-        const nlohmann::json    &params) = 0;
+    /**
+     * @brief Returns the result on success or error data on failure
+     */
+    virtual const nlohmann::json &getResult() = 0;
 
-    virtual void close() = 0;
+    virtual int32_t getErrorCode() = 0;
+
+    virtual const std::string &getErrorMsg() = 0;
 
 };
 

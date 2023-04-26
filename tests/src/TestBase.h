@@ -44,6 +44,8 @@ public:
 
     ReqRspDispatcherLoop mkReqDispatcher();
 
+    void enableDebug(bool en);
+
 protected:
     IFactory                *m_factory;
 

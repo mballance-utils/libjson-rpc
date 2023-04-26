@@ -19,6 +19,7 @@
  *     Author:
  */
 #include "TestBase.h"
+#include "dmgr/FactoryExt.h"
 #include "jrpc/FactoryExt.h"
 #include <netinet/in.h>
 #include <stdlib.h>
@@ -37,7 +38,12 @@ TestBase::~TestBase() {
 }
 
 void TestBase::SetUp() {
+    dmgr::IFactory *dmgr_factory = dmgr_getFactory();
+
     m_factory = jrpc_getFactory();
+    m_factory->init(dmgr_factory->getDebugMgr());
+
+    m_factory->getDebugMgr()->enable(false);
 }
 
 std::pair<int32_t, int32_t> TestBase::mkClientServerPair() {
@@ -63,6 +69,7 @@ TestBase::ReqRspDispatcherLoop TestBase::mkReqDispatcher() {
     std::pair<int32_t, int32_t> client_srv_fd = mkClientServerPair();
 
     IMessageRequestResponseStream *reqrsp = m_factory->mkMessageRequestResponseStream(
+        loop,
         client_srv_fd.first);
     IMessageDispatcher *dispatch = m_factory->mkNBSocketServerMessageDispatcher(
         loop, client_srv_fd.second);
@@ -72,6 +79,10 @@ TestBase::ReqRspDispatcherLoop TestBase::mkReqDispatcher() {
         .dispatch = dispatch,
         .loop = loop
     };
+}
+
+void TestBase::enableDebug(bool en) {
+    m_factory->getDebugMgr()->enable(en);
 }
 
 }

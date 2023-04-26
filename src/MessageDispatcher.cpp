@@ -24,6 +24,7 @@
  */
 #include "dmgr/impl/DebugMacros.h"
 #include "MessageDispatcher.h"
+#include "ReqMsg.h"
 #include "nlohmann/json.hpp"
 
 namespace jrpc {
@@ -46,17 +47,20 @@ void MessageDispatcher::init(
 
 void MessageDispatcher::registerMethod(
 		const std::string							&method,
-		std::function<void(const nlohmann::json &)>	impl) {
+		std::function<IRspMsgUP(IReqMsgUP &)>	impl) {
 	m_method_m.insert({method, impl});
 }
 
 void MessageDispatcher::send(const nlohmann::json &msg) {
 	DEBUG_ENTER("send");
-	std::map<std::string,std::function<void(const nlohmann::json&)>>::iterator it;
+	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>>::iterator it;
+    int32_t id = -1;
+    const std::string &method = msg["method"];
 
-	if ((it=m_method_m.find(msg["method"])) != m_method_m.end()) {
+	if ((it=m_method_m.find(method)) != m_method_m.end()) {
 		DEBUG("==> calling method impl");
-		it->second(msg);
+        IReqMsgUP req(new ReqMsg(id, method, msg["params"]));
+		IRspMsgUP rsp(it->second(req));
 		DEBUG("<== calling method impl");
 	} else {
 		// Send back an error response with code -32601 (no method)

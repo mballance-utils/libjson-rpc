@@ -23,6 +23,7 @@
 #include "jrpc/IEventLoop.h"
 #include "jrpc/IMessageDispatcher.h"
 #include "jrpc/IMessageRequestResponseStream.h"
+#include "jrpc/IRspMsg.h"
 
 namespace jrpc {
 
@@ -43,11 +44,23 @@ public:
 
     virtual int32_t mkSocketClientConnection(int32_t port) = 0;
 
-    virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(int32_t sock_fd) = 0;
+    virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(
+        IEventLoop          *loop,
+        int32_t             sock_fd) = 0;
 
     virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
         IEventLoop          *loop,
         int32_t             sock_fd) = 0;
+
+    virtual IRspMsg *mkRspMsgSuccess(
+        int32_t                 id,
+        const nlohmann::json    &result) = 0;
+
+    virtual IRspMsg *mkRspMsgError(
+        int32_t                 id,
+        int32_t                 code,
+        const std::string       &msg,
+        const nlohmann::json    &data) = 0;
 
 };
 

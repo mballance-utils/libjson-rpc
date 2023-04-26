@@ -34,12 +34,15 @@ TestDispatcher::~TestDispatcher() {
 }
 
 TEST_F(TestDispatcher, valid_req) {
+    enableDebug(true);
+
     TestBase::ReqRspDispatcherLoop h = mkReqDispatcher();
 
     bool called = false;
 
-    h.dispatch->registerMethod("myMethod", [&] (const nlohmann::json &m) {
+    h.dispatch->registerMethod("myMethod", [&](IReqMsgUP &m) {
         called = true;
+        return IRspMsgUP();
     });
 
     nlohmann::json params;

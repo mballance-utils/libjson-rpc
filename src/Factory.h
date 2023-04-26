@@ -47,11 +47,23 @@ public:
 
     virtual int32_t mkSocketClientConnection(int32_t port) override;
 
-    virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(int32_t sock_fd) override;
+    virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(
+        IEventLoop          *loop,
+        int32_t             sock_fd) override;
 
     virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
         IEventLoop          *loop,
         int32_t             sock_fd) override;
+
+    virtual IRspMsg *mkRspMsgSuccess(
+        int32_t                 id,
+        const nlohmann::json    &result) override;
+
+    virtual IRspMsg *mkRspMsgError(
+        int32_t                 id,
+        int32_t                 code,
+        const std::string       &msg,
+        const nlohmann::json    &data) override;
 
     static IFactory *inst();
 

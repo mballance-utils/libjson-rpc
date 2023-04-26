@@ -29,6 +29,7 @@
 #endif
 #include "dmgr/impl/DebugMacros.h"
 #include "MessageRequestResponseStream.h"
+#include "RspMsg.h"
 #include <unistd.h>
 #include "nlohmann/json.hpp"
 
@@ -38,15 +39,19 @@ namespace jrpc {
 
 MessageRequestResponseStream::MessageRequestResponseStream(
     dmgr::IDebugMgr             *dmgr,
-    int32_t                     sock_fd) : m_sock_fd(sock_fd), m_id(1) {
+    IEventLoop                  *loop,
+    int32_t                     sock_fd) : 
+        m_transport(dmgr, sock_fd), m_loop(loop), m_id(1) {
     DEBUG_INIT("MessageRequestResponseStream", dmgr);
+
+    m_transport.init(loop, this);
 }
 
 MessageRequestResponseStream::~MessageRequestResponseStream() {
 
 }
 
-const nlohmann::json &MessageRequestResponseStream::invoke(
+IRspMsgUP MessageRequestResponseStream::invoke(
     const std::string       &method,
     const nlohmann::json    &params) {
     int32_t id = m_id;
@@ -58,18 +63,36 @@ const nlohmann::json &MessageRequestResponseStream::invoke(
     msg["method"] = method;
     msg["params"] = params;
 
-    std::string body = msg.dump();
-    char tmp[64];
-    sprintf(tmp, "Content-Length: %d\r\n\r\n", body.size());
+    m_transport.send(msg);
 
-    ::send(m_sock_fd, tmp, strlen(tmp), 0);
-    ::send(m_sock_fd, body.c_str(), body.size(), 0);
+    m_rsp.clear();
+    do {
+        if (!m_loop->process_one_event(-1)) {
+            break;
+        }
+    } while (!m_rsp.size());
 
-    // TODO: poll, waiting for a response
+    if (m_rsp.size()) {
+        // Decode response and create a proper message
+        nlohmann::json &rsp = m_rsp.front();
+
+        if (rsp.find("error") != rsp.end()) {
+            // Error response
+        } else {
+            // Success response
+            return IRspMsgUP(new RspMsg(id, rsp["result"]));
+        }
+    } else {
+        return IRspMsgUP(); // No message
+    }
 }
 
 void MessageRequestResponseStream::close() {
-    ::close(m_sock_fd);
+//    ::close(m_sock_fd);
+}
+
+void MessageRequestResponseStream::send(const nlohmann::json &msg) {
+    m_rsp.push_back(msg);
 }
 
 dmgr::IDebug *MessageRequestResponseStream::m_dbg = 0;
