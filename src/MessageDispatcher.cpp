@@ -56,11 +56,31 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
 	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>>::iterator it;
     int32_t id = -1;
     const std::string &method = msg["method"];
+    id = msg["id"];
 
 	if ((it=m_method_m.find(method)) != m_method_m.end()) {
 		DEBUG("==> calling method impl");
         IReqMsgUP req(new ReqMsg(id, method, msg["params"]));
 		IRspMsgUP rsp(it->second(req));
+        if (rsp) {
+            nlohmann::json rsp_m;
+
+            rsp_m["jsonrpc"] = "2.0";
+            rsp_m["id"] = id;
+
+            if (rsp->getErrorCode() != -1) {
+                // Sending back an error response
+                nlohmann::json &error = rsp_m["error"];
+                error["code"] = rsp->getErrorCode();
+                error["message"] = rsp->getErrorMsg();
+                error["data"] = rsp->getResult();
+            } else {
+                // Sending back a success
+                rsp_m["result"] = rsp->getResult();
+            }
+
+            m_peer->send(rsp_m);
+        }
 		DEBUG("<== calling method impl");
 	} else {
 		// Send back an error response with code -32601 (no method)

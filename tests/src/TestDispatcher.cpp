@@ -39,17 +39,33 @@ TEST_F(TestDispatcher, valid_req) {
     TestBase::ReqRspDispatcherLoop h = mkReqDispatcher();
 
     bool called = false;
+    bool idle_called = false;
 
     h.dispatch->registerMethod("myMethod", [&](IReqMsgUP &m) {
         called = true;
-        return IRspMsgUP();
+        h.loop->addIdleTask([&]() {
+            idle_called = true;
+        });
+        return IRspMsgUP(m_factory->mkRspMsgSuccess(
+            m->getId(),
+            {"a", "foo"}
+        ));
     });
 
     nlohmann::json params;
 
     params["p1"] = 1;
 
-    h.reqrsp->invoke("myMethod", params);
+    IRspMsgUP rsp(h.reqrsp->invoke("myMethod", params));
+    ASSERT_TRUE(rsp.get());
+    ASSERT_EQ(rsp->getId(), 1);
+    ASSERT_TRUE(called);
+
+    while (h.loop->process_one_event(1)) {
+        ;
+    }
+
+    ASSERT_TRUE(idle_called);
 
     // Need a ReqResp stream
     // Need a Transport+Dispatcher pair

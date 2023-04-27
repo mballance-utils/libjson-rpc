@@ -44,9 +44,18 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
         int32_t max_fd = -1;
         fd_set      read_s, write_s, except_s;
         struct timeval timeout;
-        
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 1 * 1000; // 1ms
+        struct timeval *timeout_p = &timeout;
+
+        if (timeout_ms > 0) {
+            timeout.tv_sec = timeout_ms/1000;
+            timeout.tv_usec = (timeout_ms%1000) * 1000;
+        } else if (timeout_ms < 0) {
+            timeout_p = 0;
+        } else {
+            // Zero wait
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 0;
+        }
 
         FD_ZERO(&read_s);
         FD_ZERO(&write_s);
@@ -80,7 +89,7 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
         }
 
         int32_t res = ::select(
-            max_fd+1, &read_s, &write_s, &except_s, &timeout);
+            max_fd+1, &read_s, &write_s, &except_s, timeout_p);
 
         if (res > 0) {
             // Process each event

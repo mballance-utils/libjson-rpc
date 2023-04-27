@@ -54,6 +54,7 @@ MessageRequestResponseStream::~MessageRequestResponseStream() {
 IRspMsgUP MessageRequestResponseStream::invoke(
     const std::string       &method,
     const nlohmann::json    &params) {
+    DEBUG_ENTER("invoke %s", method.c_str());
     int32_t id = m_id;
     m_id++;
 
@@ -78,11 +79,15 @@ IRspMsgUP MessageRequestResponseStream::invoke(
 
         if (rsp.find("error") != rsp.end()) {
             // Error response
+            fprintf(stdout, "Error response\n");
+            DEBUG_LEAVE("invoke %s", method.c_str());
         } else {
             // Success response
+            DEBUG_LEAVE("invoke %s", method.c_str());
             return IRspMsgUP(new RspMsg(id, rsp["result"]));
         }
     } else {
+        DEBUG_LEAVE("invoke %s (no message)", method.c_str());
         return IRspMsgUP(); // No message
     }
 }
@@ -92,7 +97,9 @@ void MessageRequestResponseStream::close() {
 }
 
 void MessageRequestResponseStream::send(const nlohmann::json &msg) {
+    DEBUG_ENTER("send");
     m_rsp.push_back(msg);
+    DEBUG_LEAVE("send");
 }
 
 dmgr::IDebug *MessageRequestResponseStream::m_dbg = 0;
