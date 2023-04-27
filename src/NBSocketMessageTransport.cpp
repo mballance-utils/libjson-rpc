@@ -38,7 +38,8 @@ namespace jrpc {
 NBSocketMessageTransport::NBSocketMessageTransport(
     dmgr::IDebugMgr             *dmgr,
     int32_t                     sock_fd) : 
-	    m_msgbuf(0), m_msg_state(0), m_msg_length(0),
+	    m_msgbuf(0), m_msgbuf_idx(0), m_msgbuf_max(0),
+        m_msg_state(0), m_msg_length(0),
     	m_sock_fd(sock_fd), m_loop(0), m_peer(0) {
 
 }
