@@ -38,10 +38,7 @@ MessageDispatcher::~MessageDispatcher() {
 	// TODO Auto-generated destructor stub
 }
 
-void MessageDispatcher::init(
-        IEventLoop                  *loop,
-        IMessageTransport           *peer) {
-    m_loop = loop;
+void MessageDispatcher::init(IMessageTransport *peer) {
     m_peer = peer;
 }
 

@@ -30,13 +30,12 @@ class NBSocketMessageTransport : public IMessageTransport {
 public:
     NBSocketMessageTransport(
         dmgr::IDebugMgr         *dmgr,
+        IEventLoop              *loop,
         int32_t                 sock_fd);
 
     virtual ~NBSocketMessageTransport();
 
-	void init(
-        IEventLoop              *loop,
-        IMessageTransport       *peer);
+	virtual void init(IMessageTransport       *peer) override;
 
 	virtual void send(const nlohmann::json &msg) override;
 
@@ -54,13 +53,13 @@ private:
 	void msgbuf_resize_append(char c);
 
 private:
+    IEventLoop                  *m_loop;
 	char						*m_msgbuf;
 	uint32_t					m_msgbuf_idx;
 	uint32_t					m_msgbuf_max;
 	uint32_t					m_msg_state;
 	uint32_t					m_msg_length;
 	int32_t						m_sock_fd;
-    IEventLoop                  *m_loop;
 	IMessageTransport			*m_peer;
 
     static dmgr::IDebug         *m_dbg;

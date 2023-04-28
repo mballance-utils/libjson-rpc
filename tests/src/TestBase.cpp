@@ -71,8 +71,9 @@ TestBase::ReqRspDispatcherLoop TestBase::mkReqDispatcher() {
     IMessageRequestResponseStream *reqrsp = m_factory->mkMessageRequestResponseStream(
         loop,
         client_srv_fd.first);
-    IMessageDispatcher *dispatch = m_factory->mkNBSocketServerMessageDispatcher(
+    IMessageTransport *srv_transport = m_factory->mkNBSocketMessageTransport(
         loop, client_srv_fd.second);
+    IMessageDispatcher *dispatch = m_factory->mkNBSocketServerMessageDispatcher(srv_transport);
 
     return {
         .reqrsp = reqrsp,

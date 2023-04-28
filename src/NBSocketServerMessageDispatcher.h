@@ -32,14 +32,13 @@ class NBSocketServerMessageDispatcher :
 public:
     NBSocketServerMessageDispatcher(
         dmgr::IDebugMgr         *dmgr,
-        IEventLoop              *loop,
-        int32_t                 sock_fd);
+        IMessageTransport       *transport);
 
     virtual ~NBSocketServerMessageDispatcher();
 
 private:
     static dmgr::IDebug                 *m_dbg;
-    NBSocketMessageTransport            m_transport;
+    IMessageTransport                   *m_transport;
 
 };
 

@@ -51,9 +51,12 @@ public:
         IEventLoop          *loop,
         int32_t             sock_fd) override;
 
-    virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
+    virtual IMessageTransport *mkNBSocketMessageTransport(
         IEventLoop          *loop,
         int32_t             sock_fd) override;
+
+    virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
+        IMessageTransport   *transport) override;
 
     virtual IRspMsg *mkRspMsgSuccess(
         int32_t                 id,

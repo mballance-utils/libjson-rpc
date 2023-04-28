@@ -38,9 +38,7 @@ public:
 
 	virtual ~MessageDispatcher();
 
-    virtual void init(
-        IEventLoop                  *loop,
-        IMessageTransport           *peer) override;
+    virtual void init(IMessageTransport *peer) override;
 
     virtual void registerMethod(
         const std::string                           &method,

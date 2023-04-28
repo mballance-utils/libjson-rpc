@@ -48,9 +48,12 @@ public:
         IEventLoop          *loop,
         int32_t             sock_fd) = 0;
 
-    virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
+    virtual IMessageTransport *mkNBSocketMessageTransport(
         IEventLoop          *loop,
         int32_t             sock_fd) = 0;
+
+    virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
+        IMessageTransport       *transport) = 0;
 
     virtual IRspMsg *mkRspMsgSuccess(
         int32_t                 id,

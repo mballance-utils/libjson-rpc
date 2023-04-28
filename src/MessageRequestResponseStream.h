@@ -53,9 +53,7 @@ public:
 
     virtual void close() override;
 
-    virtual void init(
-        IEventLoop          *loop,
-        IMessageTransport   *peer) override { }
+    virtual void init(IMessageTransport *peer) override { }
 
 	virtual void send(const nlohmann::json &msg) override;
 

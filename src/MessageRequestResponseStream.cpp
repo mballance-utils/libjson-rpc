@@ -41,10 +41,10 @@ MessageRequestResponseStream::MessageRequestResponseStream(
     dmgr::IDebugMgr             *dmgr,
     IEventLoop                  *loop,
     int32_t                     sock_fd) : 
-        m_transport(dmgr, sock_fd), m_loop(loop), m_id(1) {
+        m_transport(dmgr, loop, sock_fd), m_loop(loop), m_id(1) {
     DEBUG_INIT("MessageRequestResponseStream", dmgr);
 
-    m_transport.init(loop, this);
+    m_transport.init(this);
 }
 
 MessageRequestResponseStream::~MessageRequestResponseStream() {

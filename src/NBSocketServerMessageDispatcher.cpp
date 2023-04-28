@@ -27,13 +27,12 @@ namespace jrpc {
 
 NBSocketServerMessageDispatcher::NBSocketServerMessageDispatcher(
     dmgr::IDebugMgr             *dmgr,
-    IEventLoop                  *loop,
-    int32_t                     sock_fd) : 
-        MessageDispatcher(dmgr), m_transport(dmgr, sock_fd) {
+    IMessageTransport           *transport) : 
+        MessageDispatcher(dmgr), m_transport(transport) {
     DEBUG_INIT("NBSocketServerMessageDispatcher", dmgr);
 
-    m_transport.init(loop, this);
-    init(loop, &m_transport);
+    m_transport->init(this);
+    init(m_transport);
 }
 
 NBSocketServerMessageDispatcher::~NBSocketServerMessageDispatcher() {

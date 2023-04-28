@@ -37,9 +37,7 @@ public:
     /**
      * Initialize the transport with its peer
      */
-    virtual void init(
-        IEventLoop          *loop,
-        IMessageTransport   *peer) = 0;
+    virtual void init(IMessageTransport   *peer) = 0;
 
     /**
      * Send an outbound message via this transport

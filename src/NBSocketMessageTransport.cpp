@@ -37,10 +37,11 @@ namespace jrpc {
 
 NBSocketMessageTransport::NBSocketMessageTransport(
     dmgr::IDebugMgr             *dmgr,
+    IEventLoop                  *loop,
     int32_t                     sock_fd) : 
-	    m_msgbuf(0), m_msgbuf_idx(0), m_msgbuf_max(0),
+        m_loop(loop), m_msgbuf(0), m_msgbuf_idx(0), m_msgbuf_max(0),
         m_msg_state(0), m_msg_length(0),
-    	m_sock_fd(sock_fd), m_loop(0), m_peer(0) {
+    	m_sock_fd(sock_fd), m_peer(0) {
 
 }
 
@@ -50,10 +51,7 @@ NBSocketMessageTransport::~NBSocketMessageTransport() {
 	}
 }
 
-void NBSocketMessageTransport::init(
-    IEventLoop              *loop,
-    IMessageTransport       *peer) {
-    m_loop = loop;
+void NBSocketMessageTransport::init(IMessageTransport *peer) {
 	m_peer = peer;
 
     // We expect to receive data, so register

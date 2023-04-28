@@ -108,11 +108,17 @@ IMessageRequestResponseStream *Factory::mkMessageRequestResponseStream(
     return new MessageRequestResponseStream(m_dmgr, loop, sock_fd);
 }
 
-IMessageDispatcher *Factory::mkNBSocketServerMessageDispatcher(
+IMessageTransport *Factory::mkNBSocketMessageTransport(
         IEventLoop          *loop,
         int32_t             sock_fd) {
-    return new NBSocketServerMessageDispatcher(m_dmgr, loop, sock_fd);
+
 }
+
+IMessageDispatcher *Factory::mkNBSocketServerMessageDispatcher(
+        IMessageTransport   *transport) {
+    return new NBSocketServerMessageDispatcher(m_dmgr, transport);
+}
+
 
 IRspMsg *Factory::mkRspMsgSuccess(
         int32_t                 id,
