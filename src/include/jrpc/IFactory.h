@@ -55,6 +55,9 @@ public:
     virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
         IMessageTransport       *transport) = 0;
 
+    virtual IRspMsg *mkRspMsg(
+        const nlohmann::json    &msg) = 0;
+
     virtual IRspMsg *mkRspMsgSuccess(
         int32_t                 id,
         const nlohmann::json    &result) = 0;

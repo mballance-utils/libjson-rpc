@@ -39,6 +39,10 @@ public:
 
 	virtual void send(const nlohmann::json &msg) override;
 
+    virtual IEventLoop *getLoop() override {
+        return m_loop;
+    }
+
 private:
     void read_ev();
 

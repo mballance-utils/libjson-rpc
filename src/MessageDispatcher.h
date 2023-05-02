@@ -27,6 +27,7 @@
 #include <functional>
 #include <map>
 #include "dmgr/IDebugMgr.h"
+#include "jrpc/IFactory.h"
 #include "jrpc/IMessageDispatcher.h"
 #include "jrpc/IMessageTransport.h"
 
@@ -34,11 +35,16 @@ namespace jrpc {
 
 class MessageDispatcher : public virtual IMessageDispatcher {
 public:
-	MessageDispatcher(dmgr::IDebugMgr *dmgr);
+	MessageDispatcher(IFactory *factory);
 
 	virtual ~MessageDispatcher();
 
     virtual void init(IMessageTransport *peer) override;
+
+    virtual void setResponseHandler(
+        const std::function<void(int32_t,IRspMsgUP &)> &handler) override {
+        m_handler = handler;
+    }
 
     virtual void registerMethod(
         const std::string                           &method,
@@ -51,9 +57,11 @@ public:
 
 private:
     static dmgr::IDebug                 *m_dbg;
+    IFactory                            *m_factory;
     IEventLoop                          *m_loop;
     IMessageTransport                   *m_peer;
 	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>> m_method_m;
+    std::function<void(int32_t,IRspMsgUP &)>    m_handler;
 };
 
 } /* namespace lls */

@@ -58,6 +58,9 @@ public:
     virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
         IMessageTransport   *transport) override;
 
+    virtual IRspMsg *mkRspMsg(
+        const nlohmann::json    &msg) override;
+
     virtual IRspMsg *mkRspMsgSuccess(
         int32_t                 id,
         const nlohmann::json    &result) override;

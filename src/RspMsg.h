@@ -59,6 +59,8 @@ public:
         return m_msg;
     }
 
+    static RspMsg *mk(const nlohmann::json &msg);
+
 private:
     int32_t                     m_id;
     int32_t                     m_err_code;

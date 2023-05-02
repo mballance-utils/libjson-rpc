@@ -111,14 +111,17 @@ IMessageRequestResponseStream *Factory::mkMessageRequestResponseStream(
 IMessageTransport *Factory::mkNBSocketMessageTransport(
         IEventLoop          *loop,
         int32_t             sock_fd) {
-
+    return new NBSocketMessageTransport(m_dmgr, loop, sock_fd);
 }
 
 IMessageDispatcher *Factory::mkNBSocketServerMessageDispatcher(
         IMessageTransport   *transport) {
-    return new NBSocketServerMessageDispatcher(m_dmgr, transport);
+    return new NBSocketServerMessageDispatcher(this, transport);
 }
 
+IRspMsg *Factory::mkRspMsg(const nlohmann::json &msg) {
+    return RspMsg::mk(msg);
+}
 
 IRspMsg *Factory::mkRspMsgSuccess(
         int32_t                 id,

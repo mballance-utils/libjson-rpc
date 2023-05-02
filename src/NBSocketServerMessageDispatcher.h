@@ -31,10 +31,14 @@ class NBSocketServerMessageDispatcher :
     public virtual MessageDispatcher {
 public:
     NBSocketServerMessageDispatcher(
-        dmgr::IDebugMgr         *dmgr,
+        IFactory                *factory,
         IMessageTransport       *transport);
 
     virtual ~NBSocketServerMessageDispatcher();
+    
+    virtual IEventLoop *getLoop() override {
+        return m_transport->getLoop();
+    }
 
 private:
     static dmgr::IDebug                 *m_dbg;

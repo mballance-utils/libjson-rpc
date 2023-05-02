@@ -57,6 +57,10 @@ public:
 
 	virtual void send(const nlohmann::json &msg) override;
 
+    virtual IEventLoop *getLoop() override {
+        return m_loop;
+    }
+
 private:
     static dmgr::IDebug                                 *m_dbg;
     NBSocketMessageTransport                            m_transport;

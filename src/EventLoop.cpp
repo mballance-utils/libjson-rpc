@@ -37,7 +37,7 @@ EventLoop::~EventLoop() {
 int32_t EventLoop::process_one_event(int32_t timeout_ms) {
     int32_t ret = 0;
 
-    DEBUG_ENTER("process_one_event");
+    DEBUG_ENTER("process_one_event (%d)");
 
     // Setup masks for 
     if (m_read_tasks.size() || m_write_tasks.size()) {

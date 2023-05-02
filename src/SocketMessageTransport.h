@@ -47,6 +47,10 @@ public:
 
 	virtual void send(const nlohmann::json &msg) override;
 
+    virtual IEventLoop *getLoop() override {
+        return m_loop;
+    }
+
 private:
 	void msgbuf_append(char c) {
 		if (m_msgbuf_idx+1 < m_msgbuf_max) {

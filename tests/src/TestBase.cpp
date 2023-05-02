@@ -86,4 +86,27 @@ void TestBase::enableDebug(bool en) {
     m_factory->getDebugMgr()->enable(en);
 }
 
+std::pair<jrpc::IMessageTransportUP, jrpc::IMessageTransportUP> TestBase::mkTransportPair(
+    jrpc::IEventLoop    *loop) {
+
+    std::pair<int32_t, int32_t> srv_port_sock = m_factory->mkSocketServer();
+
+    int client_fd = m_factory->mkSocketClientConnection(srv_port_sock.first);
+
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = 0; // pick any port
+
+    // Now, wait for a readable event
+    int addrlen = sizeof(addr);
+    int server_sock = accept(srv_port_sock.second, 
+        (struct sockaddr *)&addr, (socklen_t *)&addrlen); 
+
+    return {
+        jrpc::IMessageTransportUP(m_factory->mkNBSocketMessageTransport(loop, server_sock)),
+        jrpc::IMessageTransportUP(m_factory->mkNBSocketMessageTransport(loop, client_fd))
+    };
+}
+
 }

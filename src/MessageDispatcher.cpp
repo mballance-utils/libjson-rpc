@@ -29,9 +29,10 @@
 
 namespace jrpc {
 
-MessageDispatcher::MessageDispatcher(dmgr::IDebugMgr *dmgr) {
+MessageDispatcher::MessageDispatcher(IFactory *factory) 
+    : m_factory(factory) {
 	// TODO Auto-generated constructor stub
-    DEBUG_INIT("MessageDispatcher", dmgr);
+    DEBUG_INIT("MessageDispatcher", factory->getDebugMgr());
 }
 
 MessageDispatcher::~MessageDispatcher() {
@@ -52,36 +53,51 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
 	DEBUG_ENTER("send");
 	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>>::iterator it;
     int32_t id = -1;
-    const std::string &method = msg["method"];
     id = msg["id"];
 
-	if ((it=m_method_m.find(method)) != m_method_m.end()) {
-		DEBUG("==> calling method impl");
-        IReqMsgUP req(new ReqMsg(id, method, msg["params"]));
-		IRspMsgUP rsp(it->second(req));
-        if (rsp) {
-            nlohmann::json rsp_m;
+    if (msg.contains("method")) {
+        const std::string &method = msg["method"];
+    	if ((it=m_method_m.find(method)) != m_method_m.end()) {
+		    DEBUG("==> calling method impl");
+            IReqMsgUP req(new ReqMsg(id, method, msg["params"]));
+    		IRspMsgUP rsp(it->second(req));
+            if (rsp) {
+                nlohmann::json rsp_m;
 
-            rsp_m["jsonrpc"] = "2.0";
-            rsp_m["id"] = id;
+                rsp_m["jsonrpc"] = "2.0";
+                rsp_m["id"] = id;
 
-            if (rsp->getErrorCode() != -1) {
-                // Sending back an error response
-                nlohmann::json &error = rsp_m["error"];
-                error["code"] = rsp->getErrorCode();
-                error["message"] = rsp->getErrorMsg();
-                error["data"] = rsp->getResult();
+                if (rsp->getErrorCode() != -1) {
+                    // Sending back an error response
+                    nlohmann::json &error = rsp_m["error"];
+                    error["code"] = rsp->getErrorCode();
+                    error["message"] = rsp->getErrorMsg();
+                    error["data"] = rsp->getResult();
+                } else {
+                    // Sending back a success
+                    rsp_m["result"] = rsp->getResult();
+                 }
+
+                DEBUG_ENTER("Send response");
+                m_peer->send(rsp_m);
+                DEBUG_LEAVE("Send response");
             } else {
-                // Sending back a success
-                rsp_m["result"] = rsp->getResult();
+                DEBUG("No response");
             }
 
-            m_peer->send(rsp_m);
+    		DEBUG("<== calling method impl");
+	    } else {
+    		// Send back an error response with code -32601 (no method)
+            DEBUG("Error: no method \"%s\" registered", method.c_str());
+    	}
+    } else {
+        // Response (no method)
+        if (m_handler) {
+            IRspMsgUP rsp(m_factory->mkRspMsg(msg));
+
+            m_handler(id, rsp);
         }
-		DEBUG("<== calling method impl");
-	} else {
-		// Send back an error response with code -32601 (no method)
-	}
+    }
 	DEBUG_LEAVE("send");
 }
 

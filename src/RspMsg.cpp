@@ -44,4 +44,28 @@ RspMsg::~RspMsg() {
 
 }
 
+RspMsg *RspMsg::mk(const nlohmann::json &msg) {
+    int32_t id = msg["id"];
+    RspMsg *ret = 0;
+
+    if (msg.contains("error")) {
+        const nlohmann::json &error = msg["error"];
+        // Error
+        ret = new RspMsg(
+            id,
+            error["code"].get<int32_t>(),
+            error["message"].get<std::string>(),
+            error["data"]
+        );
+    } else {
+        // Success
+        ret = new RspMsg(
+            id,
+            msg["result"]
+        );
+    }
+
+    return ret;
+}
+
 }

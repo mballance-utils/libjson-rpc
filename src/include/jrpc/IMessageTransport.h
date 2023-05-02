@@ -24,12 +24,15 @@
  */
 
 #pragma once
+#include <memory>
 #include <string>
 #include "jrpc/IEventLoop.h"
 #include "nlohmann/json_fwd.hpp"
 
 namespace jrpc {
 
+class IMessageTransport;
+using IMessageTransportUP=std::unique_ptr<IMessageTransport>;
 class IMessageTransport {
 public:
 	virtual ~IMessageTransport() { }
@@ -43,6 +46,11 @@ public:
      * Send an outbound message via this transport
      */
 	virtual void send(const nlohmann::json &msg) = 0;
+
+    /**
+     * Get the event loop that this transport uses
+     */
+    virtual IEventLoop *getLoop() = 0;
 
 };
 

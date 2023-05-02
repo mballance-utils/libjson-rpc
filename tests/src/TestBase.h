@@ -20,6 +20,7 @@
  */
 #pragma once
 #include "jrpc/IFactory.h"
+#include "jrpc/IMessageTransport.h"
 #include "gtest/gtest.h"
 
 namespace jrpc {
@@ -45,6 +46,10 @@ public:
     ReqRspDispatcherLoop mkReqDispatcher();
 
     void enableDebug(bool en);
+
+protected:
+    std::pair<jrpc::IMessageTransportUP, jrpc::IMessageTransportUP> mkTransportPair(
+        jrpc::IEventLoop *loop);
 
 protected:
     IFactory                *m_factory;

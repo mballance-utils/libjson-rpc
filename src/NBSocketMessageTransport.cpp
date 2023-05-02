@@ -42,6 +42,7 @@ NBSocketMessageTransport::NBSocketMessageTransport(
         m_loop(loop), m_msgbuf(0), m_msgbuf_idx(0), m_msgbuf_max(0),
         m_msg_state(0), m_msg_length(0),
     	m_sock_fd(sock_fd), m_peer(0) {
+    DEBUG_INIT("MBSocketMessageTransport", dmgr);
 
 }
 
@@ -52,20 +53,24 @@ NBSocketMessageTransport::~NBSocketMessageTransport() {
 }
 
 void NBSocketMessageTransport::init(IMessageTransport *peer) {
+    DEBUG_ENTER("init");
 	m_peer = peer;
 
     // We expect to receive data, so register
     // an event callback with the event loop
     m_loop->addFdReadTask([this] { this->read_ev(); }, m_sock_fd);
+    DEBUG_LEAVE("init");
 }
 
 void NBSocketMessageTransport::send(const nlohmann::json &msg) {
+    DEBUG_ENTER("send");
 	char tmp[64];
 	std::string body = msg.dump();
 	sprintf(tmp, "Content-Length: %d\r\n\r\n", body.size());
 
 	::send(m_sock_fd, tmp, strlen(tmp), 0);
 	::send(m_sock_fd, body.c_str(), body.size(), 0);
+    DEBUG_LEAVE("send");
 }
 
 void NBSocketMessageTransport::read_ev() {
@@ -73,7 +78,7 @@ void NBSocketMessageTransport::read_ev() {
 	int32_t sz;
 	int32_t ret = 0;
 
-	DEBUG_ENTER("process");
+	DEBUG_ENTER("read_ev");
 
 	// Poll for data
 	sz = ::recv(m_sock_fd, tmp, 1024, 0);
