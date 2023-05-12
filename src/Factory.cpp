@@ -23,12 +23,15 @@
 #include "Factory.h"
 #include "MessageRequestResponseStream.h"
 #include "NBSocketServerMessageDispatcher.h"
+#include "StdioMessageTransport.h"
 #include "ReqMsg.h"
 #include "RspMsg.h"
 
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 
@@ -102,6 +105,31 @@ int32_t Factory::mkSocketClientConnection(int32_t port) {
     return client_fd;
 }
 
+int32_t Factory::mkSocketClientConnection(const std::string &skt) {
+    // Create a client
+    struct sockaddr_un serv_addr;
+    int client_fd = -1;
+
+    client_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_fd == -1) {
+        return -1;
+    }
+
+    memset(&serv_addr, 0, sizeof(struct sockaddr_un));
+    serv_addr.sun_family = AF_UNIX;
+    strcpy(serv_addr.sun_path, skt.c_str());
+
+    int len = sizeof(serv_addr);
+
+    int res = connect(client_fd, (struct sockaddr *)&serv_addr, len);
+
+    if (res == -1) {
+        return -1;
+    }
+
+    return client_fd;
+}
+
 IMessageRequestResponseStream *Factory::mkMessageRequestResponseStream(
         IEventLoop          *loop,
         int32_t             sock_fd) {
@@ -112,6 +140,11 @@ IMessageTransport *Factory::mkNBSocketMessageTransport(
         IEventLoop          *loop,
         int32_t             sock_fd) {
     return new NBSocketMessageTransport(m_dmgr, loop, sock_fd);
+}
+
+IMessageTransport *Factory::mkStdioMessageTransport(
+        IEventLoop          *loop) {
+    return new StdioMessageTransport(m_dmgr, loop);
 }
 
 IMessageDispatcher *Factory::mkNBSocketServerMessageDispatcher(

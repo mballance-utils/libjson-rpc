@@ -21,6 +21,7 @@
 #include <sys/select.h>
 #include "dmgr/impl/DebugMacros.h"
 #include "EventLoop.h"
+#include <sys/poll.h>
 
 
 namespace jrpc {

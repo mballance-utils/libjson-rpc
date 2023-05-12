@@ -47,6 +47,8 @@ public:
 
     virtual int32_t mkSocketClientConnection(int32_t port) override;
 
+    virtual int32_t mkSocketClientConnection(const std::string &skt) override;
+
     virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(
         IEventLoop          *loop,
         int32_t             sock_fd) override;
@@ -54,6 +56,9 @@ public:
     virtual IMessageTransport *mkNBSocketMessageTransport(
         IEventLoop          *loop,
         int32_t             sock_fd) override;
+
+    virtual IMessageTransport *mkStdioMessageTransport(
+        IEventLoop          *loop) override;
 
     virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
         IMessageTransport   *transport) override;

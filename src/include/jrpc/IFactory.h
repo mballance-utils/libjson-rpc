@@ -44,6 +44,8 @@ public:
 
     virtual int32_t mkSocketClientConnection(int32_t port) = 0;
 
+    virtual int32_t mkSocketClientConnection(const std::string &skt) = 0;
+
     virtual IMessageRequestResponseStream *mkMessageRequestResponseStream(
         IEventLoop          *loop,
         int32_t             sock_fd) = 0;
@@ -51,6 +53,9 @@ public:
     virtual IMessageTransport *mkNBSocketMessageTransport(
         IEventLoop          *loop,
         int32_t             sock_fd) = 0;
+
+    virtual IMessageTransport *mkStdioMessageTransport(
+        IEventLoop          *loop) = 0;
 
     virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
         IMessageTransport       *transport) = 0;

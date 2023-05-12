@@ -1,5 +1,5 @@
 /**
- * NBSocketMessageTransport.h
+ * StdioMessageTransport.h
  *
  * Copyright 2022 Matthew Ballance and Contributors
  *
@@ -19,24 +19,21 @@
  *     Author: 
  */
 #pragma once
-#include <string>
-#include "dmgr/IDebugMgr.h"
-#include "jrpc/IEventLoop.h"
-#include "jrpc/IMessageTransport.h"
 #include "BaseMessageTransport.h"
 
 namespace jrpc {
 
-class NBSocketMessageTransport : public virtual BaseMessageTransport {
+
+
+class StdioMessageTransport : public virtual BaseMessageTransport {
 public:
-    NBSocketMessageTransport(
+    StdioMessageTransport(
         dmgr::IDebugMgr         *dmgr,
-        IEventLoop              *loop,
-        int32_t                 sock_fd);
+        IEventLoop              *loop);
 
-    virtual ~NBSocketMessageTransport();
+    virtual ~StdioMessageTransport();
 
-    virtual void init(IMessageTransport *peer) override;
+	virtual void init(IMessageTransport *peer) override;
 
 protected:
 
@@ -44,9 +41,6 @@ protected:
 
 private:
     void read_ev();
-
-private:
-	int32_t						m_sock_fd;
 
 };
 
