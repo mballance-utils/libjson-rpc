@@ -56,6 +56,8 @@ void BaseMessageTransport::send(const nlohmann::json &msg) {
 	std::string body = msg.dump();
 	sprintf(tmp, "Content-Length: %d\r\n\r\n", body.size());
 
+    DEBUG("Message: %s", body.c_str());
+
 	send_data(tmp, strlen(tmp));
 	send_data(body.c_str(), body.size());
     DEBUG_LEAVE("send");

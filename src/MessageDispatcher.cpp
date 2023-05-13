@@ -53,7 +53,10 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
 	DEBUG_ENTER("send");
 	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>>::iterator it;
     int32_t id = -1;
-    id = msg["id"];
+
+    if (msg.contains("id")) {
+        id = msg["id"];
+    }
 
     if (msg.contains("method")) {
         const std::string &method = msg["method"];

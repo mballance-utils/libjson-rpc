@@ -58,7 +58,10 @@ void NBSocketMessageTransport::init(IMessageTransport *peer) {
 }
 
 int32_t NBSocketMessageTransport::send_data(const char *data, int32_t sz) {
-    return ::send(m_sock_fd, data, sz, 0);
+    DEBUG_ENTER("send_data %d (fd=%d)", sz, m_sock_fd);
+    int ret = ::send(m_sock_fd, data, sz, 0);
+    DEBUG_LEAVE("send_data ret=%d", ret);
+    return ret;
 }
 
 void NBSocketMessageTransport::read_ev() {
@@ -66,10 +69,12 @@ void NBSocketMessageTransport::read_ev() {
 	int32_t sz;
 	int32_t ret = 0;
 
-	DEBUG_ENTER("read_ev");
+	DEBUG_ENTER("read_ev fd=%d", m_sock_fd);
 
 	// Poll for data
 	sz = ::recv(m_sock_fd, tmp, 1024, 0);
+
+    DEBUG("sz=%d", sz);
 
     if (sz > 0) {
         process_data(tmp, sz);

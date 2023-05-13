@@ -33,15 +33,18 @@ public:
     virtual ~JsonUtil() { }
 
     static int64_t getInt(const nlohmann::json &v) {
+        int64_t ret = -1;
         if (v.is_number_integer()) {
             if (v.is_number_unsigned()) {
-                return v.get<uint64_t>();
+                ret = v.get<uint64_t>();
             } else {
-                return v.get<int64_t>();
+                ret = v.get<int64_t>();
             }
         } else if (v.is_string()) {
-            return strtoll(v.get<std::string>().c_str(), 0, 0);
+            ret = strtoll(v.get<std::string>().c_str(), 0, 0);
         }
+
+        return ret;
     }
 
     static int64_t getUInt(const nlohmann::json &v) {
