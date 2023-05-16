@@ -76,6 +76,9 @@ public:
         const std::string       &msg,
         const nlohmann::json    &data) override;
 
+    virtual ITaskQueue *mkTaskQueue(
+        IEventLoop              *loop) override;
+
     static IFactory *inst();
 
 private:

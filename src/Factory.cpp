@@ -26,6 +26,7 @@
 #include "StdioMessageTransport.h"
 #include "ReqMsg.h"
 #include "RspMsg.h"
+#include "TaskQueue.h"
 
 #include <netinet/in.h>
 #include <stdlib.h>
@@ -149,7 +150,7 @@ IMessageTransport *Factory::mkStdioMessageTransport(
 
 IMessageDispatcher *Factory::mkNBSocketServerMessageDispatcher(
         IMessageTransport   *transport) {
-    return new NBSocketServerMessageDispatcher(this, transport);
+    return new NBSocketServerMessageDispatcher(this, 0, transport);
 }
 
 IRspMsg *Factory::mkRspMsg(const nlohmann::json &msg) {
@@ -168,6 +169,11 @@ IRspMsg *Factory::mkRspMsgError(
         const std::string       &msg,
         const nlohmann::json    &data) {
     return new RspMsg(id, code, msg, data);
+}
+
+ITaskQueue *Factory::mkTaskQueue(
+        IEventLoop              *loop) {
+    return new TaskQueue(loop);
 }
 
 IFactory *Factory::inst() {

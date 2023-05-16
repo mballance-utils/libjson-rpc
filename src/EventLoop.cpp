@@ -42,34 +42,25 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
 
     // Setup masks for 
     if (m_read_tasks.size() || m_write_tasks.size()) {
+
         int32_t max_fd = -1;
         fd_set      read_s, write_s, except_s;
         struct timeval timeout;
         struct timeval *timeout_p = &timeout;
 
-        if (timeout_ms > 0) {
-            timeout.tv_sec = timeout_ms/1000;
-            timeout.tv_usec = (timeout_ms%1000) * 1000;
-        } else if (timeout_ms < 0) {
-            timeout_p = 0;
-        } else {
-            // Zero wait
-            timeout.tv_sec = 0;
-            timeout.tv_usec = 0;
-        }
-
-        FD_ZERO(&read_s);
-        FD_ZERO(&write_s);
-        FD_ZERO(&except_s);
+        std::vector<FdTask> write_tasks(
+            m_write_tasks.begin(),
+            m_write_tasks.end());
+        m_write_tasks.clear();
 
         std::vector<FdTask> read_tasks(
             m_read_tasks.begin(),
             m_read_tasks.end());
         m_read_tasks.clear();
-        std::vector<FdTask> write_tasks(
-            m_write_tasks.begin(),
-            m_write_tasks.end());
-        m_write_tasks.clear();
+
+        FD_ZERO(&read_s);
+        FD_ZERO(&write_s);
+        FD_ZERO(&except_s);
 
         for (std::vector<FdTask>::const_iterator
             it=read_tasks.begin();
@@ -88,6 +79,25 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
             }
             FD_SET(it->first, &write_s);
         }
+
+        if (m_idle_tasks.size()) {
+            // Do a zero-time check, since we have
+            // other things that can be done
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 0;
+        } else {
+            if (timeout_ms > 0) {
+                timeout.tv_sec = timeout_ms/1000;
+                timeout.tv_usec = (timeout_ms%1000) * 1000;
+            } else if (timeout_ms < 0) {
+                timeout_p = 0;
+            } else {
+                // Zero wait
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 0;
+            }
+        }
+
 
         int32_t res = ::select(
             max_fd+1, &read_s, &write_s, &except_s, timeout_p);
@@ -130,6 +140,7 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
     if (!ret && m_idle_tasks.size()) {
         m_idle_tasks.at(0)();
         m_idle_tasks.erase(m_idle_tasks.begin());
+        ret = 1;
     }
 
     DEBUG_LEAVE("process_one_event %d", ret);

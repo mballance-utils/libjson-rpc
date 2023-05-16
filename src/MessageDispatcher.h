@@ -30,12 +30,16 @@
 #include "jrpc/IFactory.h"
 #include "jrpc/IMessageDispatcher.h"
 #include "jrpc/IMessageTransport.h"
+#include "jrpc/ITask.h"
+#include "jrpc/ITaskQueue.h"
 
 namespace jrpc {
 
 class MessageDispatcher : public virtual IMessageDispatcher {
 public:
-	MessageDispatcher(IFactory *factory);
+	MessageDispatcher(
+        IFactory        *factory,
+        ITaskQueue      *queue);
 
 	virtual ~MessageDispatcher();
 
@@ -56,9 +60,27 @@ public:
 	virtual void send(const nlohmann::json &msg) override;
 
 private:
+
+    void dispatch(IReqMsgUP &req);
+
+    class DispatchTask : public virtual ITask {
+    public:
+        DispatchTask(MessageDispatcher *dispatch, IReqMsgUP &req) :
+            m_dispatch(dispatch), m_req(std::move(req)) {
+        }
+        virtual ~DispatchTask() { }
+
+        virtual bool run(ITaskQueue *queue) override;
+
+        static dmgr::IDebug             *m_dbg;
+        MessageDispatcher               *m_dispatch;
+        IReqMsgUP                       m_req;
+    };
+
+private:
     static dmgr::IDebug                 *m_dbg;
     IFactory                            *m_factory;
-    IEventLoop                          *m_loop;
+    ITaskQueue                          *m_queue;
     IMessageTransport                   *m_peer;
 	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>> m_method_m;
     std::function<void(int32_t,IRspMsgUP &)>    m_handler;

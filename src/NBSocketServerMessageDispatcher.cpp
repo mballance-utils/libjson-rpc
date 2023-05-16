@@ -27,8 +27,9 @@ namespace jrpc {
 
 NBSocketServerMessageDispatcher::NBSocketServerMessageDispatcher(
     IFactory                    *factory,
+    ITaskQueue                  *queue,
     IMessageTransport           *transport) : 
-        MessageDispatcher(factory), m_transport(transport) {
+        MessageDispatcher(factory, queue), m_transport(transport) {
     DEBUG_INIT("NBSocketServerMessageDispatcher", factory->getDebugMgr());
 
     m_transport->init(this);

@@ -24,6 +24,7 @@
 #include "jrpc/IMessageDispatcher.h"
 #include "jrpc/IMessageRequestResponseStream.h"
 #include "jrpc/IRspMsg.h"
+#include "jrpc/ITaskQueue.h"
 
 namespace jrpc {
 
@@ -72,6 +73,9 @@ public:
         int32_t                 code,
         const std::string       &msg,
         const nlohmann::json    &data) = 0;
+
+    virtual ITaskQueue *mkTaskQueue(
+        IEventLoop              *loop) = 0;
 
 };
 

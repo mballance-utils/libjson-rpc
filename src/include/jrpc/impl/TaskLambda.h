@@ -1,7 +1,7 @@
 /**
- * NBSocketServerMessageDispatcher.h
+ * TaskLambda.h
  *
- * Copyright 2022 Matthew Ballance and Contributors
+ * Copyright 2023 Matthew Ballance and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may 
  * not use this file except in compliance with the License.  
@@ -19,32 +19,24 @@
  *     Author: 
  */
 #pragma once
-#include "dmgr/IDebugMgr.h"
+#include <functional>
 #include "jrpc/ITaskQueue.h"
-#include "MessageDispatcher.h"
-#include "NBSocketMessageTransport.h"
 
 namespace jrpc {
 
 
-
-class NBSocketServerMessageDispatcher : 
-    public virtual MessageDispatcher {
+class TaskLambda : public virtual ITask {
 public:
-    NBSocketServerMessageDispatcher(
-        IFactory                *factory,
-        ITaskQueue              *queue,
-        IMessageTransport       *transport);
+    TaskLambda(const std::function<bool ()> &f) : m_func(f) { }
 
-    virtual ~NBSocketServerMessageDispatcher();
-    
-    virtual IEventLoop *getLoop() override {
-        return m_transport->getLoop();
+    virtual ~TaskLambda() { }
+
+    virtual bool run(ITaskQueue *queue) override {
+        return m_func();
     }
 
-private:
-    static dmgr::IDebug                 *m_dbg;
-    IMessageTransport                   *m_transport;
+protected:
+    std::function<bool ()>              m_func;
 
 };
 

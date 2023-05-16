@@ -29,10 +29,12 @@
 
 namespace jrpc {
 
-MessageDispatcher::MessageDispatcher(IFactory *factory) 
-    : m_factory(factory) {
+MessageDispatcher::MessageDispatcher(
+    IFactory        *factory,
+    ITaskQueue      *queue) : m_factory(factory), m_queue(queue) {
 	// TODO Auto-generated constructor stub
     DEBUG_INIT("MessageDispatcher", factory->getDebugMgr());
+    DispatchTask::m_dbg = m_dbg;
 }
 
 MessageDispatcher::~MessageDispatcher() {
@@ -51,7 +53,6 @@ void MessageDispatcher::registerMethod(
 
 void MessageDispatcher::send(const nlohmann::json &msg) {
 	DEBUG_ENTER("send");
-	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>>::iterator it;
     int32_t id = -1;
 
     if (msg.contains("id")) {
@@ -60,39 +61,14 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
 
     if (msg.contains("method")) {
         const std::string &method = msg["method"];
-    	if ((it=m_method_m.find(method)) != m_method_m.end()) {
-		    DEBUG("==> calling method impl");
-            IReqMsgUP req(new ReqMsg(id, method, msg["params"]));
-    		IRspMsgUP rsp(it->second(req));
-            if (rsp) {
-                nlohmann::json rsp_m;
+        IReqMsgUP req(new ReqMsg(id, method, msg["params"]));
 
-                rsp_m["jsonrpc"] = "2.0";
-                rsp_m["id"] = id;
-
-                if (rsp->getErrorCode() != -1) {
-                    // Sending back an error response
-                    nlohmann::json &error = rsp_m["error"];
-                    error["code"] = rsp->getErrorCode();
-                    error["message"] = rsp->getErrorMsg();
-                    error["data"] = rsp->getResult();
-                } else {
-                    // Sending back a success
-                    rsp_m["result"] = rsp->getResult();
-                 }
-
-                DEBUG_ENTER("Send response");
-                m_peer->send(rsp_m);
-                DEBUG_LEAVE("Send response");
-            } else {
-                DEBUG("No response");
-            }
-
-    		DEBUG("<== calling method impl");
-	    } else {
-    		// Send back an error response with code -32601 (no method)
-            DEBUG("Error: no method \"%s\" registered", method.c_str());
-    	}
+        if (m_queue) {
+            ITaskUP task(new DispatchTask(this, req));
+            m_queue->addTask(task);
+        } else {
+            dispatch(req);
+        }
     } else {
         // Response (no method)
         if (m_handler) {
@@ -104,6 +80,51 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
 	DEBUG_LEAVE("send");
 }
 
+void MessageDispatcher::dispatch(IReqMsgUP &req) {
+    DEBUG_ENTER("dispatch");
+	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>>::iterator it;
+ 	if ((it=m_method_m.find(req->getMethod())) != m_method_m.end()) {
+//        DEBUG("==> calling method impl");
+        int32_t id = req->getId();
+   		IRspMsgUP rsp(it->second(req));
+        if (rsp) {
+            nlohmann::json rsp_m;
+
+            rsp_m["jsonrpc"] = "2.0";
+            rsp_m["id"] = id;
+
+            if (rsp->getErrorCode() != -1) {
+                // Sending back an error response
+                nlohmann::json &error = rsp_m["error"];
+                error["code"] = rsp->getErrorCode();
+                error["message"] = rsp->getErrorMsg();
+                error["data"] = rsp->getResult();
+            } else {
+                // Sending back a success
+                rsp_m["result"] = rsp->getResult();
+            }
+
+            DEBUG_ENTER("Send response");
+            m_peer->send(rsp_m);
+            DEBUG_LEAVE("Send response");
+        } else {
+            DEBUG("No response");
+        }
+
+  		DEBUG("<== calling method impl");
+    } else {
+    		// Send back an error response with code -32601 (no method)
+        DEBUG("Error: no method \"%s\" registered", req->getMethod().c_str());
+  	}
+    DEBUG_LEAVE("dispatch");
+}
+
+bool MessageDispatcher::DispatchTask::run(ITaskQueue *queue) {
+    m_dispatch->dispatch(m_req);
+    return false;
+}
+
 dmgr::IDebug *MessageDispatcher::m_dbg = 0;
+dmgr::IDebug *MessageDispatcher::DispatchTask::m_dbg = 0;
 
 } /* namespace lls */
