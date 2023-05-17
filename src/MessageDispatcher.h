@@ -54,6 +54,10 @@ public:
         const std::string                           &method,
         std::function<IRspMsgUP(IReqMsgUP &)> impl) override;
 
+    virtual IMessageTransport *getPeer() override {
+        return m_peer;
+    }
+
 	/**
 	 * Inbound message
 	 */

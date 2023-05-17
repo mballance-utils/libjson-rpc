@@ -41,6 +41,8 @@ public:
         const std::string                           &method,
         std::function<IRspMsgUP(IReqMsgUP &)> impl) = 0;
 
+    virtual IMessageTransport *getPeer() = 0;
+
 };
 
 } /* namespace jrpc */
