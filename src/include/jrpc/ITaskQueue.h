@@ -32,6 +32,8 @@ public:
 
     virtual void addTask(ITaskUP &task) = 0;
 
+    virtual void addTaskPreempt(ITaskUP &task) = 0;
+
 };
 
 } /* namespace jrpc */

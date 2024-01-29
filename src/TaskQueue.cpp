@@ -24,7 +24,8 @@
 namespace jrpc {
 
 
-TaskQueue::TaskQueue(jrpc::IEventLoop *loop) : m_loop(loop) {
+TaskQueue::TaskQueue(jrpc::IEventLoop *loop) : 
+    m_idle_scheduled(false), m_loop(loop) {
 
 }
 
@@ -33,26 +34,59 @@ TaskQueue::~TaskQueue() {
 }
 
 void TaskQueue::run() {
-    bool ret = m_queue.front()->run(this);
+    m_idle_scheduled = false;
+    fprintf(stderr, "TaskQueue::run size=%d\n", m_queue.size());
+    if (m_queue.size() == 0) {
+        fprintf(stderr, "ERROR: zero-size queue\n");
+        return;
+    }
+    ITaskUP task(std::move(m_queue.front()));
+    m_queue.erase(m_queue.begin());
+    bool ret = task->run(this);
+
+    /*
     if (ret) {
         ITaskUP task(m_queue.front().release());
         m_queue.erase(m_queue.begin());
         addTask(task);
     } else {
         m_queue.erase(m_queue.begin());
+    */
 
-        if (m_queue.size()) {
-            m_loop->addIdleTask([this]() { this->run(); });
-        }
+    if (m_queue.size() > 0 && !m_idle_scheduled) {
+        fprintf(stderr, "  Schedule idle\n");
+        m_loop->addIdleTask([this]() { this->run(); });
+        m_idle_scheduled = true;
     }
+    fprintf(stderr, "<TaskQueue::run size=%d\n", m_queue.size());
+
+//    }
 }
 
 void TaskQueue::addTask(ITaskUP &task) {
+    fprintf(stderr, "TaskQueue::addTask size=%d\n", m_queue.size());
     m_queue.push_back(std::move(task));
 
-    if (m_queue.size() == 1) {
+    if (m_queue.size() == 1 && !m_idle_scheduled) {
+        fprintf(stderr, "  Schedule idle\n");
         m_loop->addIdleTask([this]() { this->run(); });
+        m_idle_scheduled = true;
     }
+    fprintf(stderr, "<TaskQueue::addTask size=%d\n", m_queue.size());
+}
+
+void TaskQueue::addTaskPreempt(ITaskUP &task) {
+    fprintf(stderr, "TaskQueue::addTaskPreempt size=%d\n", m_queue.size());
+    m_queue.insert(
+        m_queue.begin(),
+        std::move(task));
+
+    if (m_queue.size() == 1 && !m_idle_scheduled) {
+        fprintf(stderr, "  Schedule idle\n");
+        m_loop->addIdleTask([this]() { this->run(); });
+        m_idle_scheduled = true;
+    }
+    fprintf(stderr, "<TaskQueue::addTaskPreempt size=%d\n", m_queue.size());
 }
 
 }

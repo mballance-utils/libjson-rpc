@@ -55,8 +55,11 @@ IRspMsgUP MessageRequestResponseStream::invoke(
     const std::string       &method,
     const nlohmann::json    &params) {
     DEBUG_ENTER("invoke %s", method.c_str());
+    char tmp[16];
     int32_t id = m_id;
     m_id++;
+
+    sprintf(tmp, "%d", id);
 
     nlohmann::json msg;
     msg["jsonrpc"] = "2.0";
@@ -79,12 +82,12 @@ IRspMsgUP MessageRequestResponseStream::invoke(
 
         if (rsp.find("error") != rsp.end()) {
             // Error response
-            fprintf(stdout, "Error response\n");
+            fprintf(stderr, "Error response\n");
             DEBUG_LEAVE("invoke %s", method.c_str());
         } else {
             // Success response
             DEBUG_LEAVE("invoke %s", method.c_str());
-            return IRspMsgUP(new RspMsg(id, rsp["result"]));
+            return IRspMsgUP(new RspMsg(tmp, rsp["result"]));
         }
     } else {
         DEBUG_LEAVE("invoke %s (no message)", method.c_str());

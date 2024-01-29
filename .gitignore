@@ -33,3 +33,8 @@
 
 build/
 packages/
+
+.eggs/
+__pycache__/
+core.cpp
+*.egg-info

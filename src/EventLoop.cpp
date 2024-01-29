@@ -38,7 +38,8 @@ EventLoop::~EventLoop() {
 int32_t EventLoop::process_one_event(int32_t timeout_ms) {
     int32_t ret = 0;
 
-    DEBUG_ENTER("process_one_event (%d)");
+    DEBUG_ENTER("process_one_event (%d) read_tasks=%d write_tasks=%d",
+        timeout_ms, m_read_tasks.size(), m_write_tasks.size());
 
     // Setup masks for 
     if (m_read_tasks.size() || m_write_tasks.size()) {
@@ -99,8 +100,10 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
         }
 
 
+        DEBUG_ENTER("select: max_fd=%d timeout_p=%p", max_fd+1, timeout_p);
         int32_t res = ::select(
             max_fd+1, &read_s, &write_s, &except_s, timeout_p);
+        DEBUG_LEAVE("select: res=%d", res);
 
         if (res > 0) {
             // Process each event
@@ -138,8 +141,9 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
     }
 
     if (!ret && m_idle_tasks.size()) {
-        m_idle_tasks.at(0)();
+        IdleTask t = m_idle_tasks.front();
         m_idle_tasks.erase(m_idle_tasks.begin());
+        t();
         ret = 1;
     }
 

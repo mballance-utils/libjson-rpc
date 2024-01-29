@@ -46,7 +46,7 @@ public:
     virtual void init(IMessageTransport *peer) override;
 
     virtual void setResponseHandler(
-        const std::function<void(int32_t,IRspMsgUP &)> &handler) override {
+        const std::function<void(const std::string &,IRspMsgUP &)> &handler) override {
         m_handler = handler;
     }
 
@@ -87,7 +87,7 @@ private:
     ITaskQueue                          *m_queue;
     IMessageTransport                   *m_peer;
 	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>> m_method_m;
-    std::function<void(int32_t,IRspMsgUP &)>    m_handler;
+    std::function<void(const std::string &,IRspMsgUP &)>    m_handler;
 };
 
 } /* namespace lls */

@@ -32,7 +32,7 @@ public:
 
     virtual ~IRspMsg() { }
 
-    virtual int32_t getId() = 0;
+    virtual const std::string &getId() const = 0;
 
     /**
      * @brief Returns the result on success or error data on failure

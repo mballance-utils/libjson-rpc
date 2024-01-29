@@ -35,7 +35,7 @@ public:
     virtual ~IMessageDispatcher() { }
 
     virtual void setResponseHandler(
-        const std::function<void(int32_t,IRspMsgUP &)> &handler) = 0;
+        const std::function<void(const std::string &,IRspMsgUP &)> &handler) = 0;
 
     virtual void registerMethod(
         const std::string                           &method,

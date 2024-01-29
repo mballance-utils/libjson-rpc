@@ -53,10 +53,10 @@ void MessageDispatcher::registerMethod(
 
 void MessageDispatcher::send(const nlohmann::json &msg) {
 	DEBUG_ENTER("send");
-    int32_t id = -1;
+    std::string id = "-1";
 
     if (msg.contains("id")) {
-        id = msg["id"];
+        id = msg["id"].get<std::string>();
     }
 
     if (msg.contains("method")) {
@@ -65,6 +65,7 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
 
         if (m_queue) {
             ITaskUP task(new DispatchTask(this, req));
+            DEBUG("Queue message-dispatch task");
             m_queue->addTask(task);
         } else {
             dispatch(req);
@@ -85,7 +86,7 @@ void MessageDispatcher::dispatch(IReqMsgUP &req) {
 	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>>::iterator it;
  	if ((it=m_method_m.find(req->getMethod())) != m_method_m.end()) {
 //        DEBUG("==> calling method impl");
-        int32_t id = req->getId();
+        const std::string &id = req->getId();
    		IRspMsgUP rsp(it->second(req));
         if (rsp) {
             nlohmann::json rsp_m;
@@ -115,12 +116,26 @@ void MessageDispatcher::dispatch(IReqMsgUP &req) {
     } else {
     		// Send back an error response with code -32601 (no method)
         DEBUG("Error: no method \"%s\" registered", req->getMethod().c_str());
+
+        nlohmann::json rsp_m;
+        rsp_m["jsonrpc"] = "2.0";
+        rsp_m["id"] = req->getId();
+
+        nlohmann::json &error = rsp_m["error"];
+        error["code"] = -32601; // no method
+        error["message"] = "No such method";
+
+        DEBUG_ENTER("Send error response");
+        m_peer->send(rsp_m);
+        DEBUG_LEAVE("Send error response");
   	}
     DEBUG_LEAVE("dispatch");
 }
 
 bool MessageDispatcher::DispatchTask::run(ITaskQueue *queue) {
+    DEBUG_ENTER("run");
     m_dispatch->dispatch(m_req);
+    DEBUG_LEAVE("run");
     return false;
 }
 

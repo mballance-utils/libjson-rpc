@@ -35,10 +35,13 @@ public:
     virtual ~TaskQueue();
 
     virtual void addTask(ITaskUP &task) override;
+    
+    virtual void addTaskPreempt(ITaskUP &task) override;
 
     virtual void run();
 
 private:
+    bool                        m_idle_scheduled;
     jrpc::IEventLoop            *m_loop;
     std::vector<ITaskUP>        m_queue;
 };

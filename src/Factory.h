@@ -61,17 +61,18 @@ public:
         IEventLoop          *loop) override;
 
     virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
+        ITaskQueue          *queue,
         IMessageTransport   *transport) override;
 
     virtual IRspMsg *mkRspMsg(
         const nlohmann::json    &msg) override;
 
     virtual IRspMsg *mkRspMsgSuccess(
-        int32_t                 id,
+        const std::string       &id,
         const nlohmann::json    &result) override;
 
     virtual IRspMsg *mkRspMsgError(
-        int32_t                 id,
+        const std::string       &id,
         int32_t                 code,
         const std::string       &msg,
         const nlohmann::json    &data) override;

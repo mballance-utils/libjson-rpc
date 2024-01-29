@@ -29,18 +29,18 @@ namespace jrpc {
 class RspMsg : public virtual IRspMsg {
 public:
     RspMsg(
-        int32_t                 id,
+        const std::string       &id,
         const nlohmann::json    &result);
 
     RspMsg(
-        int32_t                 id,
+        const std::string       &id,
         int32_t                 code,
         const std::string       &msg,
         const nlohmann::json    &result);
 
     virtual ~RspMsg();
 
-    virtual int32_t getId() { 
+    virtual const std::string &getId() const { 
         return m_id; 
     }
 
@@ -62,7 +62,7 @@ public:
     static RspMsg *mk(const nlohmann::json &msg);
 
 private:
-    int32_t                     m_id;
+    std::string                 m_id;
     int32_t                     m_err_code;
     std::string                 m_msg;
     nlohmann::json              m_result;

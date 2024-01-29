@@ -25,14 +25,14 @@ namespace jrpc {
 
 
 RspMsg::RspMsg(
-    int32_t                 id,
+    const std::string       &id,
     const nlohmann::json    &result) 
     : m_id(id), m_err_code(-1), m_result(result) {
 
 }
 
 RspMsg::RspMsg(
-    int32_t                 id,
+    const std::string       &id,
     int32_t                 code,
     const std::string       &msg,
     const nlohmann::json    &result) 
@@ -45,7 +45,7 @@ RspMsg::~RspMsg() {
 }
 
 RspMsg *RspMsg::mk(const nlohmann::json &msg) {
-    int32_t id = msg["id"];
+    std::string id = msg["id"];
     RspMsg *ret = 0;
 
     if (msg.contains("error")) {

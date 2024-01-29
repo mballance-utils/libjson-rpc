@@ -25,7 +25,7 @@ namespace jrpc {
 
 
 ReqMsg::ReqMsg(
-    int32_t                 id,
+    const std::string       &id,
     const std::string       &method,
     const nlohmann::json    &params) : 
         m_id(id), m_method(method), m_params(params) {

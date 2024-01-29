@@ -31,7 +31,7 @@ public:
 
     virtual ~IReqMsg() { }
 
-    virtual int32_t getId() = 0;
+    virtual const std::string &getId() const = 0;
 
     virtual const std::string &getMethod() = 0;
 

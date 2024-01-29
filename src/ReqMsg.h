@@ -28,13 +28,13 @@ namespace jrpc {
 class ReqMsg : public virtual IReqMsg {
 public:
     ReqMsg(
-        int32_t                 id,
+        const std::string       &id,
         const std::string       &method,
         const nlohmann::json    &params);
 
     virtual ~ReqMsg();
 
-    virtual int32_t getId() override {
+    virtual const std::string &getId() const override {
         return m_id;
     }
 
@@ -47,7 +47,7 @@ public:
     }
 
 private:
-    int32_t                     m_id;
+    std::string                 m_id;
     std::string                 m_method;
     nlohmann::json              m_params;
 

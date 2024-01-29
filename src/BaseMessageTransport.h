@@ -69,11 +69,15 @@ protected:
 	uint32_t					m_msgbuf_idx;
 	uint32_t					m_msgbuf_max;
 	uint32_t					m_msg_state;
-	uint32_t					m_msg_length;
+	int32_t					    m_msg_length;
+    int32_t                     m_nl_count;
 	int32_t						m_socket;
 	IMessageTransport			*m_peer;
 
 	static const std::string	HEADER_PREFIX;
+	static const char           *HEADER_PREF_CONTENT;
+	static const char           *HEADER_PREF_HOST;
+	static const char           *HEADER_PREF_ACCEPT;
     static dmgr::IDebug         *m_dbg;
 };
 

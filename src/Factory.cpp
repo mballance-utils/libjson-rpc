@@ -149,8 +149,9 @@ IMessageTransport *Factory::mkStdioMessageTransport(
 }
 
 IMessageDispatcher *Factory::mkNBSocketServerMessageDispatcher(
+        ITaskQueue          *queue,
         IMessageTransport   *transport) {
-    return new NBSocketServerMessageDispatcher(this, 0, transport);
+    return new NBSocketServerMessageDispatcher(this, queue, transport);
 }
 
 IRspMsg *Factory::mkRspMsg(const nlohmann::json &msg) {
@@ -158,13 +159,13 @@ IRspMsg *Factory::mkRspMsg(const nlohmann::json &msg) {
 }
 
 IRspMsg *Factory::mkRspMsgSuccess(
-        int32_t                 id,
+        const std::string       &id,
         const nlohmann::json    &result) {
     return new RspMsg(id, result);
 }
 
 IRspMsg *Factory::mkRspMsgError(
-        int32_t                 id,
+        const std::string       &id,
         int32_t                 code,
         const std::string       &msg,
         const nlohmann::json    &data) {

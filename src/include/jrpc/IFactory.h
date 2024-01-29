@@ -59,17 +59,18 @@ public:
         IEventLoop          *loop) = 0;
 
     virtual IMessageDispatcher *mkNBSocketServerMessageDispatcher(
+        ITaskQueue              *queue,
         IMessageTransport       *transport) = 0;
 
     virtual IRspMsg *mkRspMsg(
         const nlohmann::json    &msg) = 0;
 
     virtual IRspMsg *mkRspMsgSuccess(
-        int32_t                 id,
+        const std::string       &id,
         const nlohmann::json    &result) = 0;
 
     virtual IRspMsg *mkRspMsgError(
-        int32_t                 id,
+        const std::string       &id,
         int32_t                 code,
         const std::string       &msg,
         const nlohmann::json    &data) = 0;

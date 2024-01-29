@@ -72,7 +72,8 @@ int32_t BaseMessageTransport::process_data(const char *data, int32_t sz) {
 	// Process data
 	for (int32_t i=0; i<sz; i++) {
 		switch (m_msg_state) {
-		case 0: { // Waiting for a header
+        // Detect header 
+		case 0: { // Processing headers
 			if (data[i] == HEADER_PREFIX.at(m_msgbuf_idx)) {
 				m_msgbuf_idx++;
 			} else {
@@ -98,11 +99,24 @@ int32_t BaseMessageTransport::process_data(const char *data, int32_t sz) {
 					// Reset the buffer to collect the payload
 					m_msgbuf_idx = 0;
 					m_msg_state = 2;
+                    m_nl_count = (data[i] == '\n')?1:0;
 				}
 			}
 		} break;
 
-		case 2: { // Collecting body data
+        case 2: { // Skip the rest of the header.
+                  // This means reading until we have two back-to-back newlines
+            if (data[i] == '\n') {
+                m_nl_count++;
+            } else if (data[i] != '\r') {
+                m_nl_count = 0;
+            }
+            if (m_nl_count == 2) {
+                m_msg_state = 3;
+            }
+        } break;
+
+		case 3: { // Collecting body data
 			if (m_msgbuf_idx == 0 && isspace(data[i])) {
 				// Skip leading whitespace
 			} else {
@@ -115,11 +129,12 @@ int32_t BaseMessageTransport::process_data(const char *data, int32_t sz) {
 						msg = nlohmann::json::parse(m_msgbuf);
 						m_peer->send(msg);
 					} catch (const std::exception &e) {
-						fprintf(stdout, "Failed to parse msg \"%s\" %s\n",
+						fprintf(stderr, "Failed to parse msg \"%s\" %s\n",
 								m_msgbuf, e.what());
 					}
 					m_msg_state = 0;
 					m_msgbuf_idx = 0;
+                    m_msg_length = -1;
                     ret = 1; // processed a message
 				}
 			}
@@ -153,6 +168,9 @@ void BaseMessageTransport::msgbuf_resize_append(char c) {
 }
 
 const std::string	BaseMessageTransport::HEADER_PREFIX = "Content-Length: ";
+const char *BaseMessageTransport::HEADER_PREF_CONTENT = "Content-";
+const char *BaseMessageTransport::HEADER_PREF_HOST = "Host";
+const char *BaseMessageTransport::HEADER_PREF_ACCEPT = "Accept";
 dmgr::IDebug *BaseMessageTransport::m_dbg = 0;
 
 }
