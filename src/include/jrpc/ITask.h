@@ -20,10 +20,103 @@
  */
 #pragma once
 #include <memory>
+#include <stdint.h>
 
 namespace jrpc {
 
-class ITaskQueue;
+class ITaskGroup;
+
+enum class TaskFlags {
+    NoFlags = 0,
+    Complete = (1 << 0),
+    Error = (1 << 1)
+};
+
+static inline TaskFlags operator & (const TaskFlags lhs, const TaskFlags rhs) {
+    return static_cast<TaskFlags>(
+        static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs)
+    );
+}
+
+static inline TaskFlags operator | (const TaskFlags lhs, const TaskFlags rhs) {
+    return static_cast<TaskFlags>(
+        static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)
+    );
+}
+
+static inline TaskFlags operator ~ (const TaskFlags lhs) {
+    return static_cast<TaskFlags>(~static_cast<uint32_t>(lhs));
+}
+
+class TaskResultP {
+public:
+    void            *p;
+    TaskResultP(void *p) {
+        this->p = p;
+    }
+    virtual ~TaskResultP() { }
+};
+
+class TaskResultStrP : public virtual TaskResultP {
+public:
+    TaskResultStrP(const std::string &v) :
+        TaskResultP(new std::string(v)) {
+    }
+    virtual ~TaskResultStrP() {
+        delete reinterpret_cast<std::string *>(p);
+    }
+};
+
+class TaskResult {
+public:
+    union {
+        int64_t         si;
+        bool            b;
+    } val;
+    TaskResultP         *p;
+    bool                owned;
+
+    TaskResult() {
+        val.si = 0;
+        p = 0;
+        owned = false;
+    }
+
+    TaskResult(int64_t si) {
+        val.si = si;
+        p = 0;
+        owned = false;
+    }
+
+    TaskResult(bool b) {
+        val.b = b;
+        p = 0;
+        owned = false;
+    }
+
+    ~TaskResult() {
+        if (p && owned) {
+            delete p;
+        }
+    }
+
+    void operator = (TaskResult &rhs) {
+        val = rhs.val;
+        p = rhs.p;
+        rhs.p = 0;
+    }
+
+    void operator = (const TaskResult &rhs) {
+        val = rhs.val;
+        p = rhs.p;
+    }
+};
+
+enum class TaskStatus {
+    Done,
+    Yield,
+    Blocked
+};
 
 class ITask;
 using ITaskUP=std::unique_ptr<ITask>;
@@ -38,7 +131,25 @@ public:
      * @return true -- more work to be done
      * @return false -- work complete
      */
-    virtual bool run(ITaskQueue *queue) = 0;
+    virtual TaskStatus run() = 0;
+
+    virtual ITask *clone() = 0;
+
+    virtual ITaskGroup *group() = 0;
+
+    virtual bool hasFlags(TaskFlags flags) = 0;
+
+    virtual void setFlags(TaskFlags flags) = 0;
+
+    virtual void clrFlags(TaskFlags flags) = 0;
+
+    virtual void setResult(const TaskResult &r) = 0;
+
+    virtual void setResult(TaskResult &r) = 0;
+
+    virtual const TaskResult &getResult() const = 0;
+
+    virtual TaskResult &moveResult() = 0;
 
 };
 

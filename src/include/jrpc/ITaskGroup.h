@@ -1,5 +1,5 @@
 /**
- * TaskQueue.h
+ * ITaskGroup.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,38 +19,30 @@
  *     Author: 
  */
 #pragma once
-#include <vector>
-#include "jrpc/IEventLoop.h"
+#include <memory>
 #include "jrpc/ITask.h"
-#include "jrpc/ITaskQueue.h"
 
 namespace jrpc {
 
+class ITask;
 
-
-class TaskQueue : public virtual ITaskQueue {
+class ITaskGroup;
+using ITaskGroupUP=std::unique_ptr<ITaskGroup>;
+class ITaskGroup : public virtual ITask {
 public:
-    TaskQueue(jrpc::IEventLoop *loop);
 
-    virtual ~TaskQueue();
+    virtual ~ITaskGroup() { }
 
-    virtual void addTask(ITask *task, bool owned) override;
+    virtual void pushTask(ITask *t) = 0;
     
-    virtual void addTaskPreempt(ITask *task, bool owned) override;
+    virtual void suspTask() = 0;
 
-    virtual ITaskGroup *mkTaskGroup() override;
+    virtual void wakeTask() = 0;
 
-    virtual void run();
+    virtual void popTask() = 0;
 
-private:
-    using TaskE=std::pair<ITask *, bool>;
-
-private:
-    bool                        m_idle_scheduled;
-    jrpc::IEventLoop            *m_loop;
-    std::vector<TaskE>          m_queue;
 };
 
-}
 
+} /* namespace jrpc */
 

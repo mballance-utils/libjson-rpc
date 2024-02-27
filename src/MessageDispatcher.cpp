@@ -46,9 +46,9 @@ void MessageDispatcher::init(IMessageTransport *peer) {
 }
 
 void MessageDispatcher::registerMethod(
-		const std::string							&method,
-		std::function<IRspMsgUP(IReqMsgUP &)>	impl) {
-	m_method_m.insert({method, impl});
+		const std::string				&method,
+        IMessageDispatcher::MethodF     method_f) {
+	m_method_m.insert({method, method_f});
 }
 
 void MessageDispatcher::send(const nlohmann::json &msg) {
@@ -56,7 +56,14 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
     std::string id = "-1";
 
     if (msg.contains("id")) {
-        id = msg["id"].get<std::string>();
+        if (msg["id"].is_string()) {
+            id = msg["id"].get<std::string>();
+        } else if (msg["id"].is_number()) {
+            int32_t id_i = msg["id"].get<int32_t>();
+            char tmp[16];
+            sprintf(tmp, "%d", id_i);
+            id = tmp;
+        }
     }
 
     if (msg.contains("method")) {
@@ -64,9 +71,8 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
         IReqMsgUP req(new ReqMsg(id, method, msg["params"]));
 
         if (m_queue) {
-            ITaskUP task(new DispatchTask(this, req));
             DEBUG("Queue message-dispatch task");
-            m_queue->addTask(task);
+            m_queue->addTask(new DispatchTask(0, this, req), true);
         } else {
             dispatch(req);
         }
@@ -83,7 +89,7 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
 
 void MessageDispatcher::dispatch(IReqMsgUP &req) {
     DEBUG_ENTER("dispatch");
-	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>>::iterator it;
+	std::map<std::string,IMessageDispatcher::MethodF>::iterator it;
  	if ((it=m_method_m.find(req->getMethod())) != m_method_m.end()) {
 //        DEBUG("==> calling method impl");
         const std::string &id = req->getId();
@@ -132,11 +138,11 @@ void MessageDispatcher::dispatch(IReqMsgUP &req) {
     DEBUG_LEAVE("dispatch");
 }
 
-bool MessageDispatcher::DispatchTask::run(ITaskQueue *queue) {
+TaskStatus MessageDispatcher::DispatchTask::run() {
     DEBUG_ENTER("run");
     m_dispatch->dispatch(m_req);
     DEBUG_LEAVE("run");
-    return false;
+    return TaskStatus::Done;
 }
 
 dmgr::IDebug *MessageDispatcher::m_dbg = 0;

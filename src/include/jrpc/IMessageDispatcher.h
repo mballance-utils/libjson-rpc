@@ -31,6 +31,8 @@ class IMessageDispatcher;
 using IMessageDispatcherUP=std::unique_ptr<IMessageDispatcher>;
 class IMessageDispatcher : public virtual IMessageTransport {
 public:
+    using MethodF=std::function<IRspMsgUP(IReqMsgUP &)>;
+public:
 
     virtual ~IMessageDispatcher() { }
 
@@ -38,8 +40,8 @@ public:
         const std::function<void(const std::string &,IRspMsgUP &)> &handler) = 0;
 
     virtual void registerMethod(
-        const std::string                           &method,
-        std::function<IRspMsgUP(IReqMsgUP &)> impl) = 0;
+        const std::string       &method,
+        MethodF                 method_f) = 0;
 
     virtual IMessageTransport *getPeer() = 0;
 

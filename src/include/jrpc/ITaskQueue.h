@@ -20,6 +20,7 @@
  */
 #pragma once
 #include "jrpc/ITask.h"
+#include "jrpc/ITaskGroup.h"
 
 namespace jrpc {
 
@@ -30,9 +31,11 @@ public:
 
     virtual ~ITaskQueue() { }
 
-    virtual void addTask(ITaskUP &task) = 0;
+    virtual void addTask(ITask *task, bool owned) = 0;
 
-    virtual void addTaskPreempt(ITaskUP &task) = 0;
+    virtual void addTaskPreempt(ITask *task, bool owned) = 0;
+
+    virtual ITaskGroup *mkTaskGroup() = 0;
 
 };
 

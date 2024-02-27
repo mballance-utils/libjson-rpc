@@ -18,6 +18,7 @@
  * Created on:
  *     Author:
  */
+#include "TaskGroup.h"
 #include "TaskQueue.h"
 
 
@@ -33,6 +34,10 @@ TaskQueue::~TaskQueue() {
 
 }
 
+ITaskGroup *TaskQueue::mkTaskGroup() {
+    return new TaskGroup(this);
+}
+
 void TaskQueue::run() {
     m_idle_scheduled = false;
     fprintf(stderr, "TaskQueue::run size=%d\n", m_queue.size());
@@ -40,9 +45,16 @@ void TaskQueue::run() {
         fprintf(stderr, "ERROR: zero-size queue\n");
         return;
     }
-    ITaskUP task(std::move(m_queue.front()));
+    TaskE task = m_queue.front();
     m_queue.erase(m_queue.begin());
-    bool ret = task->run(this);
+
+    TaskStatus status = task.first->run();
+
+    if (status == TaskStatus::Yield) {
+        addTask(task.first, task.second);
+    } else if (status == TaskStatus::Done && task.second) {
+        delete task.first;
+    }
 
     /*
     if (ret) {
@@ -63,9 +75,9 @@ void TaskQueue::run() {
 //    }
 }
 
-void TaskQueue::addTask(ITaskUP &task) {
+void TaskQueue::addTask(ITask *task, bool owned) {
     fprintf(stderr, "TaskQueue::addTask size=%d\n", m_queue.size());
-    m_queue.push_back(std::move(task));
+    m_queue.push_back({task, owned});
 
     if (m_queue.size() == 1 && !m_idle_scheduled) {
         fprintf(stderr, "  Schedule idle\n");
@@ -75,11 +87,9 @@ void TaskQueue::addTask(ITaskUP &task) {
     fprintf(stderr, "<TaskQueue::addTask size=%d\n", m_queue.size());
 }
 
-void TaskQueue::addTaskPreempt(ITaskUP &task) {
+void TaskQueue::addTaskPreempt(ITask *task, bool owned) {
     fprintf(stderr, "TaskQueue::addTaskPreempt size=%d\n", m_queue.size());
-    m_queue.insert(
-        m_queue.begin(),
-        std::move(task));
+    m_queue.insert(m_queue.begin(), {task, owned});
 
     if (m_queue.size() == 1 && !m_idle_scheduled) {
         fprintf(stderr, "  Schedule idle\n");

@@ -32,6 +32,7 @@
 #include "jrpc/IMessageTransport.h"
 #include "jrpc/ITask.h"
 #include "jrpc/ITaskQueue.h"
+#include "jrpc/impl/TaskBase.h"
 
 namespace jrpc {
 
@@ -51,8 +52,8 @@ public:
     }
 
     virtual void registerMethod(
-        const std::string                           &method,
-        std::function<IRspMsgUP(IReqMsgUP &)> impl) override;
+        const std::string               &method,
+        IMessageDispatcher::MethodF     method_f) override;
 
     virtual IMessageTransport *getPeer() override {
         return m_peer;
@@ -67,14 +68,19 @@ private:
 
     void dispatch(IReqMsgUP &req);
 
-    class DispatchTask : public virtual ITask {
+    class DispatchTask : public TaskBase {
     public:
-        DispatchTask(MessageDispatcher *dispatch, IReqMsgUP &req) :
-            m_dispatch(dispatch), m_req(std::move(req)) {
+        DispatchTask(
+            ITaskGroup          *group,
+            MessageDispatcher   *dispatch, 
+            IReqMsgUP           &req) :
+            TaskBase(group), m_dispatch(dispatch), m_req(std::move(req)) {
         }
         virtual ~DispatchTask() { }
 
-        virtual bool run(ITaskQueue *queue) override;
+        virtual TaskStatus run() override;
+
+        virtual ITask *clone() override { return 0; }
 
         static dmgr::IDebug             *m_dbg;
         MessageDispatcher               *m_dispatch;
@@ -86,7 +92,7 @@ private:
     IFactory                            *m_factory;
     ITaskQueue                          *m_queue;
     IMessageTransport                   *m_peer;
-	std::map<std::string,std::function<IRspMsgUP(IReqMsgUP &)>> m_method_m;
+	std::map<std::string,IMessageDispatcher::MethodF>       m_method_m;
     std::function<void(const std::string &,IRspMsgUP &)>    m_handler;
 };
 
