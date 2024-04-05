@@ -80,6 +80,8 @@ public:
     virtual ITaskQueue *mkTaskQueue(
         IEventLoop              *loop) override;
 
+    virtual ISemaphore *mkSemaphore(int32_t iv=0) override;
+
     static IFactory *inst();
 
 private:

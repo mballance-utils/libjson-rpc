@@ -71,14 +71,14 @@ private:
     class DispatchTask : public TaskBase {
     public:
         DispatchTask(
-            ITaskGroup          *group,
+            ITaskQueue          *queue,
             MessageDispatcher   *dispatch, 
             IReqMsgUP           &req) :
-            TaskBase(group), m_dispatch(dispatch), m_req(std::move(req)) {
+            TaskBase(queue), m_dispatch(dispatch), m_req(std::move(req)) {
         }
         virtual ~DispatchTask() { }
 
-        virtual TaskStatus run() override;
+        virtual ITask *run(ITask *parent, bool initial) override;
 
         virtual ITask *clone() override { return 0; }
 

@@ -1,5 +1,5 @@
 /**
- * ITaskQueue.h
+ * ISemaphore.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,22 +19,29 @@
  *     Author: 
  */
 #pragma once
+#include <stdint.h>
 #include "jrpc/ITask.h"
 
 namespace jrpc {
 
-class ITaskQueue;
-using ITaskQueueUP=std::unique_ptr<ITaskQueue>;
-class ITaskQueue {
+
+
+class ISemaphore {
 public:
 
-    virtual ~ITaskQueue() { }
+    virtual ~ISemaphore() { }
 
-    virtual void addTask(ITask *task, bool owned) = 0;
+    virtual void lock() = 0;
 
-    virtual void addTaskPreempt(ITask *task, bool owned) = 0;
+    virtual void unlock() = 0;
 
-    virtual bool runOneTask() = 0;
+    virtual void put(int32_t n=1) = 0;
+
+    virtual bool try_get(int32_t n=1) = 0;
+
+    virtual bool has(int32_t n=1) = 0;
+
+    virtual void addWaiter(ITask *task) = 0;
 
 };
 

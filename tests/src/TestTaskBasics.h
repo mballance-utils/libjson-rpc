@@ -1,5 +1,5 @@
 /**
- * ITaskQueue.h
+ * TestTaskBasics.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,25 +19,19 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/ITask.h"
+#include "TestBase.h"
 
 namespace jrpc {
 
-class ITaskQueue;
-using ITaskQueueUP=std::unique_ptr<ITaskQueue>;
-class ITaskQueue {
+
+class TestTaskBasics : public TestBase {
 public:
+    TestTaskBasics();
 
-    virtual ~ITaskQueue() { }
-
-    virtual void addTask(ITask *task, bool owned) = 0;
-
-    virtual void addTaskPreempt(ITask *task, bool owned) = 0;
-
-    virtual bool runOneTask() = 0;
+    virtual ~TestTaskBasics();
 
 };
 
-} /* namespace jrpc */
+}
 
 

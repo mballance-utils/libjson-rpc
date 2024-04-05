@@ -24,6 +24,7 @@
 #include "jrpc/IMessageDispatcher.h"
 #include "jrpc/IMessageRequestResponseStream.h"
 #include "jrpc/IRspMsg.h"
+#include "jrpc/ISemaphore.h"
 #include "jrpc/ITaskQueue.h"
 
 namespace jrpc {
@@ -77,6 +78,8 @@ public:
 
     virtual ITaskQueue *mkTaskQueue(
         IEventLoop              *loop) = 0;
+
+    virtual ISemaphore *mkSemaphore(int32_t iv=0) = 0;
 
 };
 

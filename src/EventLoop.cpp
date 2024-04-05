@@ -99,7 +99,6 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
             }
         }
 
-
         DEBUG_ENTER("select: max_fd=%d timeout_p=%p", max_fd+1, timeout_p);
         int32_t res = ::select(
             max_fd+1, &read_s, &write_s, &except_s, timeout_p);

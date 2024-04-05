@@ -26,6 +26,7 @@
 #include "StdioMessageTransport.h"
 #include "ReqMsg.h"
 #include "RspMsg.h"
+#include "Semaphore.h"
 #include "TaskQueue.h"
 
 #include <netinet/in.h>
@@ -175,6 +176,10 @@ IRspMsg *Factory::mkRspMsgError(
 ITaskQueue *Factory::mkTaskQueue(
         IEventLoop              *loop) {
     return new TaskQueue(loop);
+}
+
+ISemaphore *Factory::mkSemaphore(int32_t iv) {
+    return new Semaphore(iv);
 }
 
 IFactory *Factory::inst() {

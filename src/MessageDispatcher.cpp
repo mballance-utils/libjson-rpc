@@ -72,7 +72,7 @@ void MessageDispatcher::send(const nlohmann::json &msg) {
 
         if (m_queue) {
             DEBUG("Queue message-dispatch task");
-            m_queue->addTask(new DispatchTask(0, this, req), true);
+            m_queue->addTask(new DispatchTask(m_queue, this, req), true);
         } else {
             dispatch(req);
         }
@@ -138,11 +138,11 @@ void MessageDispatcher::dispatch(IReqMsgUP &req) {
     DEBUG_LEAVE("dispatch");
 }
 
-TaskStatus MessageDispatcher::DispatchTask::run() {
+ITask *MessageDispatcher::DispatchTask::run(ITask *parent, bool initial) {
     DEBUG_ENTER("run");
     m_dispatch->dispatch(m_req);
     DEBUG_LEAVE("run");
-    return TaskStatus::Done;
+    return 0;
 }
 
 dmgr::IDebug *MessageDispatcher::m_dbg = 0;

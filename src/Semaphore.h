@@ -1,5 +1,5 @@
 /**
- * ITaskQueue.h
+ * Semaphore.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,25 +19,42 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/ITask.h"
+#include <mutex>
+#include <vector>
+#include "jrpc/ISemaphore.h"
 
 namespace jrpc {
 
-class ITaskQueue;
-using ITaskQueueUP=std::unique_ptr<ITaskQueue>;
-class ITaskQueue {
+
+
+class Semaphore : public virtual ISemaphore {
 public:
+    Semaphore(int32_t ic);
 
-    virtual ~ITaskQueue() { }
+    virtual ~Semaphore();
 
-    virtual void addTask(ITask *task, bool owned) = 0;
+    virtual void lock() override {
+        m_mutex.lock();
+    }
 
-    virtual void addTaskPreempt(ITask *task, bool owned) = 0;
+    virtual void unlock() override {
+        m_mutex.unlock();
+    }
 
-    virtual bool runOneTask() = 0;
+    virtual void put(int32_t n=1) override;
 
+    virtual bool try_get(int32_t n=1) override;
+
+    virtual bool has(int32_t n=1) override;
+
+    virtual void addWaiter(ITask *task) override;
+
+private:
+    std::mutex                      m_mutex;
+    int32_t                         m_count;
+    std::vector<ITask *>            m_waiters;
 };
 
-} /* namespace jrpc */
+}
 
 

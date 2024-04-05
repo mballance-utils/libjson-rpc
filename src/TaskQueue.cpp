@@ -18,7 +18,6 @@
  * Created on:
  *     Author:
  */
-#include "TaskGroup.h"
 #include "TaskQueue.h"
 
 
@@ -34,8 +33,21 @@ TaskQueue::~TaskQueue() {
 
 }
 
-ITaskGroup *TaskQueue::mkTaskGroup() {
-    return new TaskGroup(this);
+bool TaskQueue::runOneTask() {
+    ITask *next = 0;
+
+    m_mutex.lock();
+    if (m_queue.size()) {
+        next = m_queue.front().first;
+        m_queue.erase(m_queue.begin());
+    }
+    m_mutex.unlock();
+
+    if (next) {
+        next->run(0, false);
+    }
+
+    return next;
 }
 
 void TaskQueue::run() {
@@ -48,13 +60,15 @@ void TaskQueue::run() {
     TaskE task = m_queue.front();
     m_queue.erase(m_queue.begin());
 
-    TaskStatus status = task.first->run();
+    ITask *next = task.first->run(0, false);
 
+/*
     if (status == TaskStatus::Yield) {
         addTask(task.first, task.second);
     } else if (status == TaskStatus::Done && task.second) {
         delete task.first;
     }
+ */
 
     /*
     if (ret) {
@@ -77,6 +91,9 @@ void TaskQueue::run() {
 
 void TaskQueue::addTask(ITask *task, bool owned) {
     fprintf(stderr, "TaskQueue::addTask size=%d\n", m_queue.size());
+
+    m_mutex.lock();
+    task->setFlags(TaskFlags::Queued);
     m_queue.push_back({task, owned});
 
     if (m_queue.size() == 1 && !m_idle_scheduled) {
@@ -84,6 +101,8 @@ void TaskQueue::addTask(ITask *task, bool owned) {
         m_loop->addIdleTask([this]() { this->run(); });
         m_idle_scheduled = true;
     }
+    m_mutex.unlock();
+
     fprintf(stderr, "<TaskQueue::addTask size=%d\n", m_queue.size());
 }
 

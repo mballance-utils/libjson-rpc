@@ -58,7 +58,7 @@ TEST_F(TestDispatcher, valid_req) {
 
     IRspMsgUP rsp(h.reqrsp->invoke("myMethod", params));
     ASSERT_TRUE(rsp.get());
-    ASSERT_EQ(rsp->getId(), 1);
+    ASSERT_EQ(rsp->getId(), "1");
     ASSERT_TRUE(called);
 
     while (h.loop->process_one_event(1)) {

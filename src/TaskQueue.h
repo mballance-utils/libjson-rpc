@@ -19,6 +19,7 @@
  *     Author: 
  */
 #pragma once
+#include <mutex>
 #include <vector>
 #include "jrpc/IEventLoop.h"
 #include "jrpc/ITask.h"
@@ -38,7 +39,7 @@ public:
     
     virtual void addTaskPreempt(ITask *task, bool owned) override;
 
-    virtual ITaskGroup *mkTaskGroup() override;
+    virtual bool runOneTask() override;
 
     virtual void run();
 
@@ -46,6 +47,7 @@ private:
     using TaskE=std::pair<ITask *, bool>;
 
 private:
+    std::mutex                  m_mutex;
     bool                        m_idle_scheduled;
     jrpc::IEventLoop            *m_loop;
     std::vector<TaskE>          m_queue;

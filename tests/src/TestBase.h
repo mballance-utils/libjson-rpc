@@ -21,6 +21,9 @@
 #pragma once
 #include "jrpc/IFactory.h"
 #include "jrpc/IMessageTransport.h"
+#include "jrpc/impl/TaskBase.h"
+#include "jrpc/impl/TaskGroup.h"
+#include "jrpc/impl/TaskSemWait.h"
 #include "gtest/gtest.h"
 
 namespace jrpc {
@@ -33,6 +36,7 @@ public:
         IMessageRequestResponseStream       *reqrsp;
         IMessageDispatcher                  *dispatch;
         IEventLoop                          *loop;
+        ITaskQueue                          *queue;
     };
 public:
     TestBase();

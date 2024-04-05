@@ -19,6 +19,7 @@
  *     Author: 
  */
 #pragma once
+#include <functional>
 #include <memory>
 #include <stdint.h>
 
@@ -27,9 +28,12 @@ namespace jrpc {
 class ITaskParent;
 
 enum class TaskFlags {
-    NoFlags = 0,
+    NoFlags  = 0,
     Complete = (1 << 0),
-    Error = (1 << 1)
+    Error    = (1 << 1),
+    Queued   = (1 << 2),
+    Yield    = (1 << 3),
+    Blocked  = (1 << 4)
 };
 
 static inline TaskFlags operator & (const TaskFlags lhs, const TaskFlags rhs) {
@@ -88,11 +92,13 @@ public:
         owned = false;
     }
 
+/*
     TaskResult(bool b) {
         val.b = b;
         p = 0;
         owned = false;
     }
+ */
 
     ~TaskResult() {
         if (p && owned) {
@@ -133,13 +139,17 @@ public:
      * @return true -- more work to be done
      * @return false -- work complete
      */
-    virtual TaskStatus run() = 0;
+    virtual ITask *run(ITask *parent, bool initial) = 0;
 
     virtual ITask *clone() = 0;
 
-    virtual ITaskDone *getTaskDone() = 0;
+    virtual ITask *parent() const = 0;
 
-    virtual void setTaskDone(ITaskDone *) = 0;
+    virtual ITask *root() = 0;
+
+    virtual ITask *tail() = 0;
+
+    virtual void addCompletionMon(const std::function<void (ITask *)> &mon) = 0;
 
     virtual bool hasFlags(TaskFlags flags) = 0;
 
@@ -154,6 +164,8 @@ public:
     virtual const TaskResult &getResult() const = 0;
 
     virtual TaskResult &moveResult() = 0;
+
+    virtual void queue() = 0;
 
 };
 

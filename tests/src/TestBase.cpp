@@ -66,6 +66,7 @@ std::pair<int32_t, int32_t> TestBase::mkClientServerPair() {
 
 TestBase::ReqRspDispatcherLoop TestBase::mkReqDispatcher() {
     IEventLoop *loop = m_factory->mkEventLoop();
+    ITaskQueue *queue = m_factory->mkTaskQueue(loop);
     std::pair<int32_t, int32_t> client_srv_fd = mkClientServerPair();
 
     IMessageRequestResponseStream *reqrsp = m_factory->mkMessageRequestResponseStream(
@@ -73,13 +74,17 @@ TestBase::ReqRspDispatcherLoop TestBase::mkReqDispatcher() {
         client_srv_fd.first);
     IMessageTransport *srv_transport = m_factory->mkNBSocketMessageTransport(
         loop, client_srv_fd.second);
-    IMessageDispatcher *dispatch = m_factory->mkNBSocketServerMessageDispatcher(srv_transport);
+    IMessageDispatcher *dispatch = m_factory->mkNBSocketServerMessageDispatcher(
+        queue, srv_transport);
 
-    return {
-        .reqrsp = reqrsp,
-        .dispatch = dispatch,
-        .loop = loop
-    };
+    ReqRspDispatcherLoop ret;
+
+    ret.reqrsp = reqrsp;
+    ret.dispatch = dispatch;
+    ret.loop = loop;
+    ret.queue = queue;
+
+    return ret;
 }
 
 void TestBase::enableDebug(bool en) {

@@ -21,22 +21,32 @@
 #pragma once
 #include <functional>
 #include "jrpc/ITaskQueue.h"
+#include "jrpc/ITaskStack.h"
+#include "jrpc/impl/TaskBase.h"
 
 namespace jrpc {
 
 
-class TaskLambda : public virtual ITask {
+class TaskLambda : public virtual TaskBase {
 public:
-    TaskLambda(const std::function<bool ()> &f) : m_func(f) { }
+    TaskLambda(
+        ITaskQueue                          *queue,
+        const std::function<TaskStatus ()>  &f) : 
+        TaskBase(queue), m_func(f) { }
+
+    TaskLambda(
+        ITaskStack                          *stack,
+        const std::function<TaskStatus ()>  &f) : 
+        TaskBase(stack), m_func(f) { }
 
     virtual ~TaskLambda() { }
 
-    virtual bool run(ITaskQueue *queue) override {
+    virtual TaskStatus run() override {
         return m_func();
     }
 
 protected:
-    std::function<bool ()>              m_func;
+    std::function<TaskStatus ()>              m_func;
 
 };
 
