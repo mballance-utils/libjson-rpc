@@ -1,5 +1,5 @@
 /**
- * ITaskGroup.h
+ * ITaskDone.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,27 +19,20 @@
  *     Author: 
  */
 #pragma once
-#include <memory>
-#include "jrpc/ITask.h"
 
 namespace jrpc {
 
 class ITask;
 
-class ITaskGroup;
-using ITaskGroupUP=std::unique_ptr<ITaskGroup>;
-class ITaskGroup : public virtual ITask {
+class ITaskDone {
 public:
 
-    virtual ~ITaskGroup() { }
+    virtual ~ITaskDone() { }
 
-    virtual void suspTask() = 0;
-
-    virtual void wakeTask() = 0;
-
+    virtual void notifyTaskDone(ITask *task) = 0;
 
 };
 
-
 } /* namespace jrpc */
+
 

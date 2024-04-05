@@ -20,23 +20,33 @@
  */
 #pragma once
 #include "jrpc/ITask.h"
+#include "jrpc/ITaskDone.h"
+#include "jrpc/ITaskStack.h"
 
 namespace jrpc {
 
 class TaskBase : public virtual ITask {
 public:
 
-    TaskBase(ITaskGroup *group) : 
-        m_group(group), m_flags(TaskFlags::NoFlags) { }
+    TaskBase(ITaskStack *stack) : 
+        m_stack(stack), m_done(0), m_flags(TaskFlags::NoFlags) { }
 
     TaskBase(TaskBase *o) :
-        m_group(o->m_group), m_result(o->moveResult()), 
+        m_stack(o->m_stack), m_result(o->moveResult()), 
         m_flags(o->m_flags) { }
 
     virtual ~TaskBase() { }
 
-    virtual ITaskGroup *group() override {
-        return m_group;
+    virtual ITaskStack *stack() {
+        return m_stack;
+    }
+
+    virtual ITaskDone *getTaskDone() override {
+        return m_done;
+    }
+
+    virtual void setTaskDone(ITaskDone *done) override {
+        m_done = done;
     }
 
     virtual bool hasFlags(TaskFlags flags) override {
@@ -68,7 +78,8 @@ public:
     }
 
 protected:
-    ITaskGroup              *m_group;
+    ITaskStack              *m_stack;
+    ITaskDone               *m_done;
     TaskResult              m_result;
     TaskFlags               m_flags;
 };

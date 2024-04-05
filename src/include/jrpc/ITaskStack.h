@@ -1,5 +1,5 @@
 /**
- * ITaskGroup.h
+ * ITaskStack.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,27 +19,24 @@
  *     Author: 
  */
 #pragma once
-#include <memory>
 #include "jrpc/ITask.h"
 
 namespace jrpc {
 
-class ITask;
 
-class ITaskGroup;
-using ITaskGroupUP=std::unique_ptr<ITaskGroup>;
-class ITaskGroup : public virtual ITask {
+class ITaskStack : public virtual ITask {
 public:
 
-    virtual ~ITaskGroup() { }
+    virtual ~ITaskStack() { }
 
-    virtual void suspTask() = 0;
+    virtual void pushTask(ITask *t) = 0;
 
-    virtual void wakeTask() = 0;
+    virtual void queueTask(ITask *t) = 0;
 
+    virtual void popTask() = 0;
 
 };
 
-
 } /* namespace jrpc */
+
 

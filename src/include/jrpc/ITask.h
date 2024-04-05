@@ -24,7 +24,7 @@
 
 namespace jrpc {
 
-class ITaskGroup;
+class ITaskParent;
 
 enum class TaskFlags {
     NoFlags = 0,
@@ -118,6 +118,8 @@ enum class TaskStatus {
     Blocked
 };
 
+class ITaskDone;
+
 class ITask;
 using ITaskUP=std::unique_ptr<ITask>;
 class ITask {
@@ -135,7 +137,9 @@ public:
 
     virtual ITask *clone() = 0;
 
-    virtual ITaskGroup *group() = 0;
+    virtual ITaskDone *getTaskDone() = 0;
+
+    virtual void setTaskDone(ITaskDone *) = 0;
 
     virtual bool hasFlags(TaskFlags flags) = 0;
 
