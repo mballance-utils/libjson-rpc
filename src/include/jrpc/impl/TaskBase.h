@@ -20,6 +20,7 @@
  */
 #pragma once
 #include <mutex>
+#include <vector>
 #include "jrpc/ITask.h"
 #include "jrpc/ITaskDone.h"
 #include "jrpc/ITaskQueue.h"

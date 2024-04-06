@@ -30,23 +30,22 @@ namespace jrpc {
 class TaskLambda : public virtual TaskBase {
 public:
     TaskLambda(
-        ITaskQueue                          *queue,
-        const std::function<TaskStatus ()>  &f) : 
+        ITaskQueue                                  *queue,
+        const std::function<ITask *(ITask *, bool)>  &f) : 
         TaskBase(queue), m_func(f) { }
-
-    TaskLambda(
-        ITaskStack                          *stack,
-        const std::function<TaskStatus ()>  &f) : 
-        TaskBase(stack), m_func(f) { }
 
     virtual ~TaskLambda() { }
 
-    virtual TaskStatus run() override {
-        return m_func();
+    virtual ITask *clone() override {
+        return 0;
+    }
+
+    virtual ITask *run(ITask *parent, bool initial) override {
+        return m_func(parent, initial);
     }
 
 protected:
-    std::function<TaskStatus ()>              m_func;
+    std::function<ITask *(ITask *, bool)>              m_func;
 
 };
 
