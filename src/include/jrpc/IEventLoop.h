@@ -22,20 +22,23 @@
 #include <functional>
 #include <memory>
 #include <stdint.h>
+#include "jrpc/ITaskScheduler.h"
 
 namespace jrpc {
+
+class ITaskQueue;
 
 
 class IEventLoop;
 using IEventLoopUP=std::unique_ptr<IEventLoop>;
-class IEventLoop {
+class IEventLoop : public virtual ITaskScheduler {
 public:
 
     virtual ~IEventLoop() { }
 
     virtual int32_t process_one_event(int32_t timeout_ms) = 0;
 
-    virtual void addIdleTask(std::function<void ()> task) = 0;
+    virtual void setTaskQueue(ITaskQueue *q) = 0;
 
     virtual void addAfterTask(
         std::function<void ()>  task,

@@ -78,7 +78,7 @@ public:
         const nlohmann::json    &data) override;
 
     virtual ITaskQueue *mkTaskQueue(
-        IEventLoop              *loop) override;
+        ITaskScheduler          *sched) override;
 
     virtual ISemaphore *mkSemaphore(int32_t iv=0) override;
 

@@ -174,8 +174,8 @@ IRspMsg *Factory::mkRspMsgError(
 }
 
 ITaskQueue *Factory::mkTaskQueue(
-        IEventLoop              *loop) {
-    return new TaskQueue(loop);
+        ITaskScheduler          *sched) {
+    return new TaskQueue(m_dmgr, sched);
 }
 
 ISemaphore *Factory::mkSemaphore(int32_t iv) {

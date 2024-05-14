@@ -52,59 +52,84 @@ public:
         }
     }
 
-    virtual ITask *runLeave(ITask *parent, bool initial) {
-        ITask *ret = 0;
-        if (hasFlags(TaskFlags::Complete)) {
-            // We're done.
-            // First things first, notify any watchers
-            for (std::vector<std::function<void (ITask *)>>::const_iterator
-                it=m_done.begin();
-                it!=m_done.end(); it++) {
-                (*it)(this);
+    ITask *taskComplete(ITask *parent, bool initial) {
+        ITask *ret = this;
+
+        // First things first, notify any watchers
+        for (std::vector<std::function<void (ITask *)>>::const_iterator
+            it=m_done.begin();
+            it!=m_done.end(); it++) {
+            (*it)(this);
+        }
+
+        if (m_parent) {
+            // Always propagate the result up
+            m_parent->setResult(moveResult());
+            dynamic_cast<TaskBase *>(m_parent)->m_child = 0;
+            if (!initial) {
+                // If this isn't the first call, then
+                // we need to call back up the stack
+                // to see where we block next
+                ITask *next = m_parent;
+
+                // Since this task is complete, delete it
+                delete this;
+
+                ret = next->run(0, false);
+            }
+        }
+
+        return ret;
+    }
+
+    ITask *taskBlock(ITask *parent, bool initial) {
+        ITask *ret = this;
+
+        // We need to suspend. 
+        if (initial) {
+            // Initial, so clone ourselves
+            ret = clone();
+
+            if (m_child) {
+                dynamic_cast<TaskBase *>(m_child)->m_parent = ret;
             }
 
-            if (m_parent) {
-                // Always propagate the result up
-                m_parent->setResult(moveResult());
-                if (!initial) {
-                    // If this isn't the first call, then
-                    // we need to call back up the stack
-                    // to see where we block next
-                    ITask *next = m_parent;
+            // Update links such that we point at the chain
+            // that is being built
+            if (parent) {
+                // Non-root task
+                dynamic_cast<TaskBase *>(parent)->m_child = ret;
+            } else {
+                // This is the root task
+                m_parent = 0;
 
-                    // Since this task is complete, delete it
-                    delete this;
-
-                    ret = next->run(0, false);
-                }
+                // Go find the actual tail, since we're now at root
+                ret = ret->tail();
             }
         } else {
-            // We need to suspend. 
-            if (initial) {
-                // Initial, so clone ourselves
-                ret = clone();
+            // On a non-initial blocking call, just
+            // return ourselves (we've already been cloned)
+            ret = this;
+        }
 
-                if (m_child) {
-                    dynamic_cast<TaskBase *>(m_child)->m_parent = ret;
-                }
+        // If the leaf task yielded, then re-queue 
+        // immediately
+        if (ret && ret->hasFlags(TaskFlags::Yield)) {
+            queue();
+        }
 
-                // Update links such that we point at the chain
-                // that is being built
-                if (parent) {
-                    // Non-root task
-                    dynamic_cast<TaskBase *>(parent)->m_child = ret;
-                } else {
-                    // This is the root task
-                    m_parent = 0;
+        return ret;
+    }
 
-                    // Go find the actual tail, since we're now at root
-                    ret = ret->tail();
-                }
-            } else {
-                // On a non-initial blocking call, just
-                // return ourselves (we've already been cloned)
-                ret = this;
-            }
+    virtual ITask *runLeave(ITask *parent, bool initial) {
+        ITask *ret = 0;
+        fprintf(stdout, "runLeave: flags=0x%08x\n", m_flags); fflush(stdout);
+        if (hasFlags(TaskFlags::Complete)) {
+            // We're done.
+            fprintf(stdout, "taskComplete mon=%d\n", m_done.size()); fflush(stdout);
+            ret = taskComplete(parent, initial);
+        } else {
+            ret = taskBlock(parent, initial);
         }
         return ret;
     }
@@ -185,8 +210,8 @@ protected:
     std::mutex                                    m_mutex;
     ITaskQueue                                    *m_queue;
     std::vector<std::function<void (ITask *)>>    m_done;
-    TaskResult                  m_result;
-    TaskFlags                   m_flags;
+    TaskResult                                    m_result;
+    TaskFlags                                     m_flags;
 
 };
 

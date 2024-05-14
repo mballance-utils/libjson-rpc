@@ -20,8 +20,10 @@
  */
 #include <sys/select.h>
 #include "dmgr/impl/DebugMacros.h"
+#include "jrpc/ITaskQueue.h"
 #include "EventLoop.h"
 #include <sys/poll.h>
+#include <time.h>
 
 
 namespace jrpc {
@@ -37,16 +39,34 @@ EventLoop::~EventLoop() {
 
 int32_t EventLoop::process_one_event(int32_t timeout_ms) {
     int32_t ret = 0;
+    struct timeval timeout;
 
     DEBUG_ENTER("process_one_event (%d) read_tasks=%d write_tasks=%d",
         timeout_ms, m_read_tasks.size(), m_write_tasks.size());
+
+    // First, determine how much time to wait
+    uint64_t time_q_wait_us = 0;
+    uint64_t api_req_us = timeout_ms * 1000;
+
+    if (m_task_q && m_task_q->havePending()) {
+        time_q_wait_us = 0;
+    } else if (m_time_q.size()) {
+        time_q_wait_us = m_time_q.at(0).first;
+    }
+
+    if (time_q_wait_us < api_req_us) {
+        timeout.tv_sec = time_q_wait_us / (1000*1000);
+        timeout.tv_usec = time_q_wait_us % (1000*1000);
+    } else {
+        timeout.tv_sec = api_req_us / (1000*1000);
+        timeout.tv_usec = api_req_us % (1000*1000);
+    }
 
     // Setup masks for 
     if (m_read_tasks.size() || m_write_tasks.size()) {
 
         int32_t max_fd = -1;
         fd_set      read_s, write_s, except_s;
-        struct timeval timeout;
         struct timeval *timeout_p = &timeout;
 
         std::vector<FdTask> write_tasks(
@@ -79,24 +99,6 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
                 max_fd = it->first;
             }
             FD_SET(it->first, &write_s);
-        }
-
-        if (m_idle_tasks.size()) {
-            // Do a zero-time check, since we have
-            // other things that can be done
-            timeout.tv_sec = 0;
-            timeout.tv_usec = 0;
-        } else {
-            if (timeout_ms > 0) {
-                timeout.tv_sec = timeout_ms/1000;
-                timeout.tv_usec = (timeout_ms%1000) * 1000;
-            } else if (timeout_ms < 0) {
-                timeout_p = 0;
-            } else {
-                // Zero wait
-                timeout.tv_sec = 0;
-                timeout.tv_usec = 0;
-            }
         }
 
         DEBUG_ENTER("select: max_fd=%d timeout_p=%p", max_fd+1, timeout_p);
@@ -137,21 +139,52 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
                 write_tasks.begin(),
                 write_tasks.end());
         }
+    } else {
+        // No sockets. What about time?
+        timespec ts, ts_r;
+        ts.tv_sec = timeout.tv_sec;
+        ts.tv_nsec = (timeout.tv_usec * 1000);
+
+        nanosleep(&ts, &ts_r);
     }
 
-    if (!ret && m_idle_tasks.size()) {
-        IdleTask t = m_idle_tasks.front();
-        m_idle_tasks.erase(m_idle_tasks.begin());
-        t();
-        ret = 1;
+    // Now, update the time queue
+    m_mutex.lock();
+    if (m_time_q.size()) {
+        uint64_t time_us = timeout.tv_sec;
+        time_us *= (1000ULL*1000ULL);
+        time_us += timeout.tv_usec;
+
+        if (m_time_q.at(0).first > time_us) {
+            m_time_q.at(0).first -= time_us;
+        } else {
+            m_time_q.at(0).first = 0;
+        }
+    }
+    m_mutex.unlock();
+
+    while (true) {
+        ITask *task = 0;
+        m_mutex.lock();
+        if (m_time_q.size() && !m_time_q.at(0).first) {
+            task = m_time_q.at(0).second;
+            m_time_q.erase(m_time_q.begin());
+        }
+        m_mutex.unlock();
+
+        if (task) {
+            task->queue();
+        } else {
+            break;
+        }
+    }
+
+    if (m_task_q) {
+        m_task_q->runOneTask();
     }
 
     DEBUG_LEAVE("process_one_event %d", ret);
     return ret;
-}
-
-void EventLoop::addIdleTask(std::function<void ()> task) {
-    m_idle_tasks.push_back(task);
 }
 
 void EventLoop::addAfterTask(
@@ -170,6 +203,30 @@ void EventLoop::addFdWriteTask(
         std::function<void ()>  task,
         int32_t                 fd) {
     m_write_tasks.push_back({fd, task});
+}
+
+void EventLoop::scheduleTask(ITask *task, uint64_t n_us) {
+    uint32_t i=0; 
+
+    m_mutex.lock();
+    for (; i<m_time_q.size(); i++) {
+        if (n_us < m_time_q.at(i).first) {
+            m_time_q.insert(m_time_q.begin()+i, {n_us, task});
+            break;
+        } else {
+            n_us -= m_time_q.at(i).first;
+        }
+    }
+
+    if (i == m_time_q.size()) {
+        m_time_q.push_back({n_us, task});
+    }
+
+    m_mutex.unlock();
+}
+
+void EventLoop::cancelSchedule(ITask *task) {
+
 }
 
 dmgr::IDebug *EventLoop::m_dbg = 0;

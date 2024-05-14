@@ -19,11 +19,14 @@
  *     Author: 
  */
 #pragma once
+#include <mutex>
 #include <vector>
 #include "dmgr/IDebugMgr.h"
 #include "jrpc/IEventLoop.h"
 
 namespace jrpc {
+
+class ITaskQueue;
 
 
 class EventLoop : public virtual IEventLoop {
@@ -34,7 +37,9 @@ public:
 
     virtual int32_t process_one_event(int32_t timeout_ms) override;
 
-    virtual void addIdleTask(std::function<void ()> task) override;
+    virtual void setTaskQueue(ITaskQueue *q) override {
+        m_task_q = q;
+    }
 
     virtual void addAfterTask(
         std::function<void ()>  task,
@@ -48,16 +53,25 @@ public:
         std::function<void ()>  task,
         int32_t                 fd) override;
 
+    virtual void scheduleTask(ITask *task, uint64_t n_us) override;
+
+    virtual void cancelSchedule(ITask *task) override;
+    
+
 private:
     using FdTask=std::pair<int32_t,std::function<void()>>;
     using TimedTask=std::pair<int32_t,std::function<void()>>;
     using IdleTask=std::function<void()>;
+    using TimeEntry=std::pair<uint64_t, ITask *>;
 private:
     static dmgr::IDebug                 *m_dbg;
+    std::mutex                          m_mutex;
     std::vector<FdTask>                 m_read_tasks;
     std::vector<FdTask>                 m_write_tasks;
     std::vector<TimedTask>              m_timed_tasks;
     std::vector<IdleTask>               m_idle_tasks;
+    ITaskQueue                          *m_task_q;
+    std::vector<TimeEntry>              m_time_q;
 
 };
 

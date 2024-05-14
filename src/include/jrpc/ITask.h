@@ -71,25 +71,45 @@ public:
     }
 };
 
+enum class TaskResultFlags {
+    NoFlags = 0,
+    Owned   = (1 << 0),
+    Pointer = (1 << 1)
+};
+
+static inline TaskResultFlags operator |(const TaskResultFlags &l, const TaskResultFlags &r) {
+    return static_cast<TaskResultFlags>(
+        static_cast<uint32_t>(l) | static_cast<uint32_t>(r));
+}
+
+static inline TaskResultFlags operator &(const TaskResultFlags &l, const TaskResultFlags &r) {
+    return static_cast<TaskResultFlags>(
+        static_cast<uint32_t>(l) & static_cast<uint32_t>(r));
+}
+
+
 class TaskResult {
 public:
     union {
         int64_t         si;
         bool            b;
+        void            *p;
     } val;
-    TaskResultP         *p;
-    bool                owned;
+    TaskResultFlags     flags;
 
     TaskResult() {
         val.si = 0;
-        p = 0;
-        owned = false;
+        flags = TaskResultFlags::NoFlags;
     }
 
     TaskResult(int64_t si) {
         val.si = si;
-        p = 0;
-        owned = false;
+        flags = TaskResultFlags::NoFlags;
+    }
+
+    TaskResult(void *p, bool owned) {
+        val.p = p;
+        flags = TaskResultFlags::Pointer | (owned ? TaskResultFlags::Owned : TaskResultFlags::NoFlags);
     }
 
 /*
@@ -101,21 +121,8 @@ public:
  */
 
     ~TaskResult() {
-        if (p && owned) {
-            delete p;
-        }
     }
 
-    void operator = (TaskResult &rhs) {
-        val = rhs.val;
-        p = rhs.p;
-        rhs.p = 0;
-    }
-
-    void operator = (const TaskResult &rhs) {
-        val = rhs.val;
-        p = rhs.p;
-    }
 };
 
 enum class TaskStatus {
@@ -150,6 +157,8 @@ public:
     virtual ITask *tail() = 0;
 
     virtual void addCompletionMon(const std::function<void (ITask *)> &mon) = 0;
+
+    bool done() { return hasFlags(TaskFlags::Complete); }
 
     virtual bool hasFlags(TaskFlags flags) = 0;
 

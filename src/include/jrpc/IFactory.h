@@ -26,6 +26,7 @@
 #include "jrpc/IRspMsg.h"
 #include "jrpc/ISemaphore.h"
 #include "jrpc/ITaskQueue.h"
+#include "jrpc/ITaskScheduler.h"
 
 namespace jrpc {
 
@@ -77,7 +78,7 @@ public:
         const nlohmann::json    &data) = 0;
 
     virtual ITaskQueue *mkTaskQueue(
-        IEventLoop              *loop) = 0;
+        ITaskScheduler          *sched) = 0;
 
     virtual ISemaphore *mkSemaphore(int32_t iv=0) = 0;
 

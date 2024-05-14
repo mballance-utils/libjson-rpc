@@ -19,11 +19,14 @@
  *     Author: 
  */
 #pragma once
+#include <condition_variable>
 #include <mutex>
 #include <vector>
-#include "jrpc/IEventLoop.h"
+#include "dmgr/IDebugMgr.h"
 #include "jrpc/ITask.h"
 #include "jrpc/ITaskQueue.h"
+#include "jrpc/ITaskScheduler.h"
+#include "jrpc/impl/TaskLambda.h"
 
 namespace jrpc {
 
@@ -31,26 +34,41 @@ namespace jrpc {
 
 class TaskQueue : public virtual ITaskQueue {
 public:
-    TaskQueue(jrpc::IEventLoop *loop);
+    TaskQueue(dmgr::IDebugMgr *dmgr, ITaskScheduler *sched);
 
     virtual ~TaskQueue();
 
+    virtual void setScheduler(ITaskScheduler *scheduler) override {
+        m_scheduler = scheduler;
+    }
+
+    virtual bool havePending() override;
+
     virtual void addTask(ITask *task, bool owned) override;
+
+    virtual void queueTask(ITask *task) override;
+
+    virtual void scheduleTask(ITask *task, uint64_t n_us) override;
     
-    virtual void addTaskPreempt(ITask *task, bool owned) override;
+    virtual void run();
 
     virtual bool runOneTask() override;
 
-    virtual void run();
+    virtual bool runOneWorkerTask() override;
 
 private:
     using TaskE=std::pair<ITask *, bool>;
 
 private:
-    std::mutex                  m_mutex;
-    bool                        m_idle_scheduled;
-    jrpc::IEventLoop            *m_loop;
-    std::vector<TaskE>          m_queue;
+    static dmgr::IDebug                 *m_dbg;
+    std::mutex                          m_mutex;
+    std::condition_variable             m_cond;
+    jrpc::ITaskScheduler                *m_scheduler;
+    bool                                m_idle_scheduled;
+    std::vector<TaskE>                  m_queue;
+    int32_t                             m_pending;
+    bool                                m_closing;
+    std::vector<ITaskQueueWorkerUP>     m_workers;
 };
 
 }

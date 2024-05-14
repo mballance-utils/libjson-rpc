@@ -1,5 +1,5 @@
 /**
- * TaskLambda.h
+ * TaskLockWriteValid.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,49 +19,46 @@
  *     Author: 
  */
 #pragma once
-#include <functional>
-#include "jrpc/ITaskQueue.h"
-#include "jrpc/ITaskStack.h"
+#include "jrpc/impl/LockRwValid.h"
 #include "jrpc/impl/TaskBase.h"
 
 namespace jrpc {
 
-
-class TaskLambda : public virtual TaskBase {
+class TaskLockWriteValid : public TaskBase {
 public:
-    TaskLambda(
-        ITaskQueue                                  *queue,
-        const std::function<ITask *(ITask *, bool)>  &f) : 
-        TaskBase(queue), m_func(f) { }
 
-    TaskLambda(TaskLambda *o) : TaskBase(o), m_func(o->m_func) { }
+    TaskLockWriteValid(ITaskQueue *queue, LockRwValid *lock) : 
+        TaskBase(queue), m_lock(lock) { }
 
-    virtual ~TaskLambda() { }
+    TaskLockWriteValid(TaskLockWriteValid *o) : TaskBase(o), m_lock(o->m_lock) { }
 
-    virtual ITask *clone() override {
-        return new TaskLambda(this);
-    }
+    virtual ~TaskLockWriteValid() { }
 
     virtual ITask *run(ITask *parent, bool initial) override {
         runEnter(parent, initial);
+        ITask *ret = this;
 
-        if (initial) {
-            ITask *ret = m_func(this, initial);
-            if (ret->hasFlags(jrpc::TaskFlags::Complete)) {
-                setFlags(jrpc::TaskFlags::Complete);
-            }
+        m_lock->lock();
+        if (m_lock->m_write_own || m_lock->m_read_own || !m_lock->m_valid) {
+            // Someone else owns, or it's invalid
+            ret = taskBlock(parent, initial);
+            m_lock->m_write_waiters.push_back(ret);
         } else {
-            setFlags(jrpc::TaskFlags::Complete);
+            // Got the lock
+            setFlags(TaskFlags::Complete);
+            m_lock->m_write_own++;
+            ret = taskComplete(parent, initial);
         }
+        m_lock->unlock();
 
-        return runLeave(parent, initial);
+        return ret;
     }
 
-protected:
-    std::function<ITask *(ITask *, bool)>              m_func;
+private:
+    LockRwValid         *m_lock;
 
 };
 
-}
+} /* namespace jrpc */
 
 

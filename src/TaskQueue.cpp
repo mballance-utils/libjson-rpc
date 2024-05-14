@@ -18,15 +18,17 @@
  * Created on:
  *     Author:
  */
+#include "dmgr/impl/DebugMacros.h"
 #include "TaskQueue.h"
 
 
 namespace jrpc {
 
 
-TaskQueue::TaskQueue(jrpc::IEventLoop *loop) : 
-    m_idle_scheduled(false), m_loop(loop) {
-
+TaskQueue::TaskQueue(dmgr::IDebugMgr *dmgr, ITaskScheduler *sched) : 
+    m_scheduler(sched), m_idle_scheduled(false), m_pending(0),
+    m_closing(false) {
+    DEBUG_INIT("jrpc::TaskQueue", dmgr);
 }
 
 TaskQueue::~TaskQueue() {
@@ -48,6 +50,32 @@ bool TaskQueue::runOneTask() {
     }
 
     return next;
+}
+
+bool TaskQueue::runOneWorkerTask() {
+    bool ret = true;
+
+    while (true) {
+        TaskE task = {0, false};
+        m_mutex.lock();
+        if (m_queue.size()) {
+            task = m_queue.front();
+            m_queue.erase(m_queue.begin());
+        }
+        m_pending++;
+        m_mutex.unlock();
+
+        if (task.first) {
+            m_mutex.lock();
+            m_pending--;
+            m_mutex.unlock();
+        } else {
+            // Need to wait for something to happen
+        }
+    }
+    // Assumed to have 
+
+    return ret;
 }
 
 void TaskQueue::run() {
@@ -79,14 +107,25 @@ void TaskQueue::run() {
         m_queue.erase(m_queue.begin());
     */
 
-    if (m_queue.size() > 0 && !m_idle_scheduled) {
+#ifdef UNDEFINED
+    if (m_loop && m_queue.size() > 0 && !m_idle_scheduled) {
         fprintf(stderr, "  Schedule idle\n");
         m_loop->addIdleTask([this]() { this->run(); });
         m_idle_scheduled = true;
     }
+#endif
     fprintf(stderr, "<TaskQueue::run size=%d\n", m_queue.size());
 
 //    }
+}
+
+bool TaskQueue::havePending() {
+    bool ret;
+    m_mutex.lock();
+    ret = m_queue.size();
+    m_mutex.unlock();
+
+    return ret;
 }
 
 void TaskQueue::addTask(ITask *task, bool owned) {
@@ -96,26 +135,37 @@ void TaskQueue::addTask(ITask *task, bool owned) {
     task->setFlags(TaskFlags::Queued);
     m_queue.push_back({task, owned});
 
-    if (m_queue.size() == 1 && !m_idle_scheduled) {
+#ifdef UNDEFINED
+    if (m_loop && m_queue.size() == 1 && !m_idle_scheduled) {
         fprintf(stderr, "  Schedule idle\n");
         m_loop->addIdleTask([this]() { this->run(); });
         m_idle_scheduled = true;
     }
+#endif
     m_mutex.unlock();
 
     fprintf(stderr, "<TaskQueue::addTask size=%d\n", m_queue.size());
 }
 
-void TaskQueue::addTaskPreempt(ITask *task, bool owned) {
-    fprintf(stderr, "TaskQueue::addTaskPreempt size=%d\n", m_queue.size());
-    m_queue.insert(m_queue.begin(), {task, owned});
+void TaskQueue::queueTask(ITask *task) {
+    m_mutex.lock();
+    task->setFlags(TaskFlags::Queued);
+    m_queue.push_back({task, false});
 
-    if (m_queue.size() == 1 && !m_idle_scheduled) {
+#ifdef UNDEFINED
+    if (m_loop && m_queue.size() == 1 && !m_idle_scheduled) {
         fprintf(stderr, "  Schedule idle\n");
         m_loop->addIdleTask([this]() { this->run(); });
         m_idle_scheduled = true;
     }
-    fprintf(stderr, "<TaskQueue::addTaskPreempt size=%d\n", m_queue.size());
+#endif
+    m_mutex.unlock();
 }
+
+void TaskQueue::scheduleTask(ITask *task, uint64_t n_us) {
+    m_scheduler->scheduleTask(task, n_us);
+}
+
+dmgr::IDebug *TaskQueue::m_dbg = 0;
 
 }
