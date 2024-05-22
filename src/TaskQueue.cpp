@@ -46,6 +46,7 @@ bool TaskQueue::runOneTask() {
     m_mutex.unlock();
 
     if (next) {
+        next->clrFlags(TaskFlags::Yield);
         next->run(0, false);
     }
 
@@ -129,8 +130,6 @@ bool TaskQueue::havePending() {
 }
 
 void TaskQueue::addTask(ITask *task, bool owned) {
-    fprintf(stderr, "TaskQueue::addTask size=%d\n", m_queue.size());
-
     m_mutex.lock();
     task->setFlags(TaskFlags::Queued);
     m_queue.push_back({task, owned});
@@ -143,8 +142,6 @@ void TaskQueue::addTask(ITask *task, bool owned) {
     }
 #endif
     m_mutex.unlock();
-
-    fprintf(stderr, "<TaskQueue::addTask size=%d\n", m_queue.size());
 }
 
 void TaskQueue::queueTask(ITask *task) {

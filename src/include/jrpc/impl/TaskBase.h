@@ -53,7 +53,7 @@ public:
     }
 
     ITask *taskComplete(ITask *parent, bool initial) {
-        ITask *ret = this;
+        ITask *ret = 0;
 
         // First things first, notify any watchers
         for (std::vector<std::function<void (ITask *)>>::const_iterator
@@ -114,8 +114,9 @@ public:
 
         // If the leaf task yielded, then re-queue 
         // immediately
-        if (ret && ret->hasFlags(TaskFlags::Yield)) {
-            queue();
+        if (ret && ret->hasFlags(TaskFlags::Yield)
+            && ret->hasFlags(TaskFlags::Complete)) {
+            ret->queue();
         }
 
         return ret;
@@ -123,10 +124,8 @@ public:
 
     virtual ITask *runLeave(ITask *parent, bool initial) {
         ITask *ret = 0;
-        fprintf(stdout, "runLeave: flags=0x%08x\n", m_flags); fflush(stdout);
         if (hasFlags(TaskFlags::Complete)) {
             // We're done.
-            fprintf(stdout, "taskComplete mon=%d\n", m_done.size()); fflush(stdout);
             ret = taskComplete(parent, initial);
         } else {
             ret = taskBlock(parent, initial);

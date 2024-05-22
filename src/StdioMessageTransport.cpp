@@ -47,6 +47,7 @@ void StdioMessageTransport::init(IMessageTransport *peer) {
 }
 
 int32_t StdioMessageTransport::send_data(const char *data, int32_t sz) {
+    DEBUG("send_data: %s (%d)", data, sz);
     ::write(1, data, sz);
 }
 

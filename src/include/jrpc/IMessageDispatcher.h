@@ -31,7 +31,7 @@ class IMessageDispatcher;
 using IMessageDispatcherUP=std::unique_ptr<IMessageDispatcher>;
 class IMessageDispatcher : public virtual IMessageTransport {
 public:
-    using MethodF=std::function<IRspMsgUP(IReqMsgUP &)>;
+    using MethodF=std::function<void(IReqMsgUP &)>;
 public:
 
     virtual ~IMessageDispatcher() { }

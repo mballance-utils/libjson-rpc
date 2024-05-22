@@ -93,30 +93,30 @@ void MessageDispatcher::dispatch(IReqMsgUP &req) {
  	if ((it=m_method_m.find(req->getMethod())) != m_method_m.end()) {
 //        DEBUG("==> calling method impl");
         const std::string &id = req->getId();
-   		IRspMsgUP rsp(it->second(req));
-        if (rsp) {
-            nlohmann::json rsp_m;
+   		it->second(req);
+        // if (rsp) {
+        //     nlohmann::json rsp_m;
 
-            rsp_m["jsonrpc"] = "2.0";
-            rsp_m["id"] = id;
+        //     rsp_m["jsonrpc"] = "2.0";
+        //     rsp_m["id"] = id;
 
-            if (rsp->getErrorCode() != -1) {
-                // Sending back an error response
-                nlohmann::json &error = rsp_m["error"];
-                error["code"] = rsp->getErrorCode();
-                error["message"] = rsp->getErrorMsg();
-                error["data"] = rsp->getResult();
-            } else {
-                // Sending back a success
-                rsp_m["result"] = rsp->getResult();
-            }
+        //     if (rsp->getErrorCode() != -1) {
+        //         // Sending back an error response
+        //         nlohmann::json &error = rsp_m["error"];
+        //         error["code"] = rsp->getErrorCode();
+        //         error["message"] = rsp->getErrorMsg();
+        //         error["data"] = rsp->getResult();
+        //     } else {
+        //         // Sending back a success
+        //         rsp_m["result"] = rsp->getResult();
+        //     }
 
-            DEBUG_ENTER("Send response");
-            m_peer->send(rsp_m);
-            DEBUG_LEAVE("Send response");
-        } else {
-            DEBUG("No response");
-        }
+        //     DEBUG_ENTER("Send response");
+        //     m_peer->send(rsp_m);
+        //     DEBUG_LEAVE("Send response");
+        // } else {
+        //     DEBUG("No response");
+        // }
 
   		DEBUG("<== calling method impl");
     } else {

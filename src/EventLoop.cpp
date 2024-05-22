@@ -29,7 +29,7 @@
 namespace jrpc {
 
 
-EventLoop::EventLoop(dmgr::IDebugMgr *dmgr) {
+EventLoop::EventLoop(dmgr::IDebugMgr *dmgr) : m_task_q(0) {
     DEBUG_INIT("EventLoop", dmgr);
 }
 
@@ -40,13 +40,15 @@ EventLoop::~EventLoop() {
 int32_t EventLoop::process_one_event(int32_t timeout_ms) {
     int32_t ret = 0;
     struct timeval timeout;
+    struct timeval *timeout_p = &timeout;
 
-    DEBUG_ENTER("process_one_event (%d) read_tasks=%d write_tasks=%d",
-        timeout_ms, m_read_tasks.size(), m_write_tasks.size());
+    DEBUG_ENTER("process_one_event (%d) read_tasks=%d write_tasks=%d have_pending=%d",
+        timeout_ms, m_read_tasks.size(), m_write_tasks.size(),
+        (m_task_q)?m_task_q->havePending():-1);
 
     // First, determine how much time to wait
-    uint64_t time_q_wait_us = 0;
-    uint64_t api_req_us = timeout_ms * 1000;
+    int64_t time_q_wait_us = -1;
+    int64_t api_req_us = timeout_ms * 1000;
 
     if (m_task_q && m_task_q->havePending()) {
         time_q_wait_us = 0;
@@ -54,20 +56,32 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
         time_q_wait_us = m_time_q.at(0).first;
     }
 
-    if (time_q_wait_us < api_req_us) {
-        timeout.tv_sec = time_q_wait_us / (1000*1000);
-        timeout.tv_usec = time_q_wait_us % (1000*1000);
+    if (time_q_wait_us < 0) {
+        // No reason to wake up to service time-queue events
+        if (api_req_us < 0) {
+            timeout_p = 0; // wait forever
+        } else {
+            // Use the specified timeout
+            timeout.tv_sec = api_req_us / (1000*1000);
+            timeout.tv_usec = api_req_us % (1000*1000);
+        }
     } else {
-        timeout.tv_sec = api_req_us / (1000*1000);
-        timeout.tv_usec = api_req_us % (1000*1000);
+        // There is an event to wake up from
+        if (api_req_us < 0 || (time_q_wait_us < api_req_us)) {
+            timeout.tv_sec = time_q_wait_us / (1000*1000);
+            timeout.tv_usec = time_q_wait_us % (1000*1000);
+        } else {
+            timeout.tv_sec = api_req_us / (1000*1000);
+            timeout.tv_usec = api_req_us % (1000*1000);
+        }
     }
+
 
     // Setup masks for 
     if (m_read_tasks.size() || m_write_tasks.size()) {
 
         int32_t max_fd = -1;
         fd_set      read_s, write_s, except_s;
-        struct timeval *timeout_p = &timeout;
 
         std::vector<FdTask> write_tasks(
             m_write_tasks.begin(),
@@ -180,7 +194,7 @@ int32_t EventLoop::process_one_event(int32_t timeout_ms) {
     }
 
     if (m_task_q) {
-        m_task_q->runOneTask();
+        ret |= m_task_q->runOneTask();
     }
 
     DEBUG_LEAVE("process_one_event %d", ret);

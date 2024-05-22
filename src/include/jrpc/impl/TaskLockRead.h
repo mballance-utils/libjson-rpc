@@ -29,9 +29,10 @@ namespace jrpc {
 class TaskLockRead : public TaskBase {
 public:
 
-    TaskLockRead(ITaskQueue *queue, LockRw *lock) : TaskBase(queue) { }
+    TaskLockRead(ITaskQueue *queue, LockRw *lock) : 
+        TaskBase(queue), m_lock(lock) { }
 
-    TaskLockRead(TaskLockRead *o) : TaskBase(o) { }
+    TaskLockRead(TaskLockRead *o) : TaskBase(o), m_lock(o->m_lock) { }
 
     virtual ~TaskLockRead() { }
 

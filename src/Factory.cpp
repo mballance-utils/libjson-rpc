@@ -30,6 +30,7 @@
 #include "TaskQueue.h"
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -99,6 +100,9 @@ int32_t Factory::mkSocketClientConnection(int32_t port) {
     serv_addr.sin_port = htons(port);
 
     int res = connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+
+    int flag = 1; 
+    setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 
     if (res == -1) {
         return -1;

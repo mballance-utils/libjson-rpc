@@ -81,6 +81,8 @@ void NBSocketMessageTransport::read_ev() {
 
         // Re-register the event for more data
         m_loop->addFdReadTask([this] { this->read_ev(); }, m_sock_fd);
+    } else {
+        DEBUG("No more data");
     }
 
 	DEBUG_LEAVE("read_ev %d", ret);

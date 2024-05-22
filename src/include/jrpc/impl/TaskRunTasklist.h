@@ -45,8 +45,6 @@ public:
     }
 
     virtual ITask *run(ITask *parent, bool initial) {
-        fprintf(stdout, "TaskRunTasklist::run\n");
-        fflush(stdout);
         runEnter(parent, initial);
 
         ITask *ret;
@@ -83,9 +81,6 @@ private:
                 break;
             }
         }
-
-        fprintf(stdout, "taskDone: m_tasks=%d\n", m_tasks.size());
-        fflush(stdout);
 
         done = (m_tasks.size() == 0);
         m_mutex.unlock();

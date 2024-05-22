@@ -43,11 +43,8 @@ public:
         ITask *ret = 0;
         runEnter(parent, initial);
 
-        fprintf(stdout, "run(%p, %d)\n", parent, initial);
-
         m_sem->lock();
         if (m_sem->has(m_n)) {
-            fprintf(stdout, "Complete\n");
             setFlags(TaskFlags::Complete);
 
             if (!initial) {
@@ -80,10 +77,6 @@ public:
             } else {
                 waiter = this;
             }
-            fprintf(stdout, "waiter is: %p parent=%p parent-child=%p\n", 
-                waiter, 
-                dynamic_cast<TaskBase *>(waiter)->m_parent,
-                dynamic_cast<TaskBase *>(dynamic_cast<TaskBase *>(waiter)->m_parent)->m_child);
             m_sem->addWaiter(waiter);
         }
         m_sem->unlock();

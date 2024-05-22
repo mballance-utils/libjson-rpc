@@ -32,9 +32,10 @@ public:
     TaskLambda(
         ITaskQueue                                  *queue,
         const std::function<ITask *(ITask *, bool)>  &f) : 
-        TaskBase(queue), m_func(f) { }
+        TaskBase(queue), m_func(f), m_initial(true) { }
 
-    TaskLambda(TaskLambda *o) : TaskBase(o), m_func(o->m_func) { }
+    TaskLambda(TaskLambda *o) : TaskBase(o), 
+        m_func(o->m_func), m_initial(false) { }
 
     virtual ~TaskLambda() { }
 
@@ -43,11 +44,12 @@ public:
     }
 
     virtual ITask *run(ITask *parent, bool initial) override {
+        initial = m_initial;
         runEnter(parent, initial);
 
         if (initial) {
             ITask *ret = m_func(this, initial);
-            if (ret->hasFlags(jrpc::TaskFlags::Complete)) {
+            if (!ret || ret->done()) {
                 setFlags(jrpc::TaskFlags::Complete);
             }
         } else {
@@ -58,6 +60,7 @@ public:
     }
 
 protected:
+    bool                                                m_initial;
     std::function<ITask *(ITask *, bool)>              m_func;
 
 };

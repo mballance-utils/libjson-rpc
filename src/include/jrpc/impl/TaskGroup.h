@@ -102,7 +102,7 @@ private:
         }
 
         if (it == m_subtasks.end()) {
-            fprintf(stdout, "Error: failed to find completing task\n");
+            fprintf(stderr, "Error: failed to find completing task\n");
         } else {
             m_subtasks.erase(it);
         }
