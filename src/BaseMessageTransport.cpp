@@ -130,7 +130,7 @@ int32_t BaseMessageTransport::process_data(const char *data, int32_t sz) {
 					try {
 						msg = nlohmann::json::parse(m_msgbuf);
 					} catch (const std::exception &e) {
-                        ERROR("Failed to parse msg \"%s\" %s\n",
+                        DEBUG_ERROR("Failed to parse msg \"%s\" %s\n",
                             m_msgbuf, e.what());
 						fprintf(stderr, "Failed to parse msg \"%s\" %s\n",
 								m_msgbuf, e.what());
@@ -138,7 +138,7 @@ int32_t BaseMessageTransport::process_data(const char *data, int32_t sz) {
 					try {
 						m_peer->send(msg);
 					} catch (const std::exception &e) {
-                        ERROR("Failed to send msg \"%s\" %s\n",
+                        DEBUG_ERROR("Failed to send msg \"%s\" %s\n",
                             m_msgbuf, e.what());
 					}
 					m_msg_state = 0;
