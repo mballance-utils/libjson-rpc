@@ -192,6 +192,7 @@ public:
     }
 
     virtual TaskResult &moveResult() override {
+        // TODO: drop ownership
         return m_result;
     }
 

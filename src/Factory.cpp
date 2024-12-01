@@ -53,7 +53,7 @@ IEventLoop *Factory::mkEventLoop() {
     return new EventLoop(m_dmgr);
 }
 
-std::pair<int32_t, int32_t> Factory::mkSocketServer() {
+std::pair<int32_t, int32_t> Factory::mkSocketServer(int32_t port) {
    // Create a server
     int server_fd, server_sock;
 
@@ -65,7 +65,7 @@ std::pair<int32_t, int32_t> Factory::mkSocketServer() {
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    addr.sin_port = 0; // pick any port
+    addr.sin_port = htons((port != -1)?port:0); 
 
     int res = bind(server_fd, (struct sockaddr *)&addr,
         sizeof(addr));

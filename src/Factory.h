@@ -43,7 +43,7 @@ public:
 
     virtual IEventLoop *mkEventLoop() override;
     
-    virtual std::pair<int32_t, int32_t> mkSocketServer() override;
+    virtual std::pair<int32_t, int32_t> mkSocketServer(int32_t port=-1) override;
 
     virtual int32_t mkSocketClientConnection(int32_t port) override;
 
