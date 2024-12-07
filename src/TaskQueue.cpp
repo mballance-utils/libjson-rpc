@@ -131,6 +131,24 @@ bool TaskQueue::havePending() {
 
 void TaskQueue::addTask(ITask *task, bool owned) {
     m_mutex.lock();
+
+    if (task->hasFlags(TaskFlags::Queued)) {
+        DEBUG("Note: task is already queued");
+        m_mutex.unlock();
+        return;
+    } else {
+        // This is really debug code...
+        for (std::vector<TaskE>::const_iterator
+            it=m_queue.begin();
+            it!=m_queue.end(); it++) {
+            if (it->first == task) {
+                DEBUG_ERROR("Task already in queue");
+                m_mutex.unlock();
+                return;
+            }
+        }
+    }
+
     task->setFlags(TaskFlags::Queued);
     m_queue.push_back({task, owned});
 

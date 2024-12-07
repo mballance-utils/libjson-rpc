@@ -1,5 +1,5 @@
 /**
- * TaskLockWrite.h
+ * TaskLockReadData.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,50 +19,53 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/impl/LockRw.h"
+#include "jrpc/impl/LockRwData.h"
 #include "jrpc/impl/TaskBase.h"
 
 namespace jrpc {
 
-class TaskLockWrite : public TaskBase {
+
+
+class TaskLockReadData : public TaskBase {
 public:
 
-    TaskLockWrite(ITaskQueue *queue, LockRw *lock) : 
-        TaskBase(queue), m_idx(0), m_lock(lock) { }
+    TaskLockReadData(ITaskQueue *queue, LockRwData *lock) : 
+        TaskBase(queue), m_lock(lock) { }
 
-    TaskLockWrite(TaskLockWrite *o) : 
-        TaskBase(o), m_idx(o->m_idx), m_lock(o->m_lock) { }
+    TaskLockReadData(TaskLockReadData *o) : TaskBase(o), m_lock(o->m_lock) { }
 
-    virtual ~TaskLockWrite() { }
+    virtual ~TaskLockReadData() { }
 
-    virtual ITask *clone() { return new TaskLockWrite(this); }
+    virtual ITask *clone() override {
+        return new TaskLockReadData(this);
+    }
 
     virtual ITask *run(ITask *parent, bool initial) override {
         runEnter(parent, initial);
         ITask *ret = this;
 
         m_lock->lock();
-        if (m_lock->m_write_own || m_lock->m_read_own) {
-            // Someone else owns 
+        if (m_lock->m_write_own || !m_lock->m_data) {
+            // Someone else holds a write lock or we're not valid
             ret = taskBlock(parent, initial);
-            m_lock->m_write_waiters.push_back(ret);
-            m_lock->unlock();
+            m_lock->m_read_waiters.push_back(ret);
         } else {
             // Got the lock
             setFlags(TaskFlags::Complete);
-            m_lock->m_write_own++;
+            m_lock->m_read_own++;
 
-            m_lock->unlock();
+            // Pass back the result
+            setResult(TaskResult(m_lock->m_data, false));
+
             ret = taskComplete(parent, initial);
         }
+        m_lock->unlock();
 
         return ret;
     }
 
-private:
-    int32_t             m_idx;
-    LockRw              *m_lock;
-
+protected:
+    LockRwData              *m_lock;
 };
 
 } /* namespace jrpc */

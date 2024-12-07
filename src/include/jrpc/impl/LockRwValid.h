@@ -24,7 +24,6 @@
 namespace jrpc {
 
 
-
 class LockRwValid : public LockRw {
 public:
     friend class TaskLockReadValid;
